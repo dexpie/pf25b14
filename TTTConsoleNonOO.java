@@ -95,7 +95,7 @@ public class TTTConsoleNonOO {
     public static int stepGameUpdate(int player, int selectedRow, int selectedCol) {
         // Update game board
         board[selectedRow][selectedCol] = player;
-
+//kikikik
         // Compute and return the new game state
         if (board[selectedRow][0] == player       // 3-in-the-row
                 && board[selectedRow][1] == player
