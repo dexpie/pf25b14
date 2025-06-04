@@ -152,6 +152,7 @@ public class TTTConsoleNonOO {
             }
         }
         System.out.println();
+        // halo
     }
 
     /** Print a cell having the given content */
