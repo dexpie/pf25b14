@@ -57,7 +57,7 @@ public class TTTConsoleNonOO {
                 break;
             }
 
-        } while (true);
+        } while (true);//bebas
     }
 
 
