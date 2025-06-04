@@ -1,5 +1,9 @@
 import java.util.Scanner;
-//himmel
+/**
+ * Tic-Tac-Toe: Two-player, console-based, non-graphics, non-OO version.
+ * All variables/methods are declared as static (i.e., class)
+ *  in this non-OO version.
+ */
 public class TTTConsoleNonOO {
     // Define named constants for:
     //  1. Player: using CROSS and NOUGHT
@@ -7,7 +11,7 @@ public class TTTConsoleNonOO {
     public static final int CROSS   = 0;
     public static final int NOUGHT  = 1;
     public static final int NO_SEED = 2;
-    //frierenn
+
     // The game board
     public static final int ROWS = 3, COLS = 3;  // number of rows/columns
     public static int[][] board = new int[ROWS][COLS]; // EMPTY, CROSS, NOUGHT
@@ -27,8 +31,8 @@ public class TTTConsoleNonOO {
 
     /** The entry main method (the program starts here) */
     public static void main(String[] args) {
-        // Initialize the board, currentState and currentPlayer
-        do {
+        do{
+            // Initialize the board, currentState and currentPlayer
             initGame();
 
             // Play the game once
@@ -40,26 +44,32 @@ public class TTTConsoleNonOO {
                 paintBoard();
                 // Print message if game over
                 if (currentState == CROSS_WON) {
-                    System.out.println("'X' won!\nBye!");
+                    System.out.println("'X' won!");
                 } else if (currentState == NOUGHT_WON) {
-                    System.out.println("'O' won!\nBye!");
+                    System.out.println("'O' won!");
                 } else if (currentState == DRAW) {
-                    System.out.println("It's a Draw!\nBye!");
+                    System.out.println("It's a Draw!");
                 }
                 // Switch currentPlayer
                 currentPlayer = (currentPlayer == CROSS) ? NOUGHT : CROSS;
-            } while (currentState == PLAYING);
+            } while (currentState == PLAYING); // repeat if not game over
+            // Prompt the user whether to play again
+            boolean invalid=true;
+            do{
+                System.out.print("Play again (y/n)? ");
+                char ans = in.next().charAt(0);
+                if (ans == 'n' || ans == 'N') {
+                    System.out.println("Bye!");
+                    System.exit(0);  // terminate the program
+                } else if(ans == 'y' || ans == 'Y'){
+                    invalid = false;
+                } else{
+                    System.out.println("invalid input, try again!");
+                }
+            } while(invalid);
 
-            System.out.print("Play again (y/n)? ");
-            char ans = in.next().charAt(0);
-            if (ans != 'y' && ans != 'Y') {
-                System.out.println("Bye!");
-                break;
-            }
-
-        } while (true);
+        } while(true);
     }
-
 
     /** Initialize the board[][], currentState and currentPlayer for a new game*/
     public static void initGame() {
@@ -71,7 +81,6 @@ public class TTTConsoleNonOO {
         currentPlayer = CROSS;   // cross plays first
         currentState  = PLAYING; // ready to play
     }
-
 
     /** The currentPlayer makes one move (one step).
      Update board[selectedRow][selectedCol] and currentState. */
@@ -152,7 +161,6 @@ public class TTTConsoleNonOO {
             }
         }
         System.out.println();
-        // halo
     }
 
     /** Print a cell having the given content */
@@ -161,8 +169,6 @@ public class TTTConsoleNonOO {
             case CROSS:   System.out.print(" X "); break;
             case NOUGHT:  System.out.print(" O "); break;
             case NO_SEED: System.out.print("   "); break;
-   }
-
-}
-
+        }
+    }
 }
