@@ -5,7 +5,7 @@ import java.awt.*;
 public class Cell {
     // Define named constants for drawing
     public static final int SIZE = 120; // cell width/height (square)
-    // Symbols (cross/nought) are displayed inside a cell, with padding from border
+    // Symbols (cross/nought) are displayed inside celll, with padding from border
     public static final int PADDING = SIZE / 5;
     public static final int SEED_SIZE = SIZE - PADDING * 2;
     public static final int SEED_STROKE_WIDTH = 8; // pen's stroke width
