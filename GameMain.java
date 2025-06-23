@@ -117,6 +117,8 @@ public class GameMain extends JPanel {
         }
     }
 
+    // HALOOOOOO
+
     /** The entry "main" method */
     public static void main(String[] args) {
         // Run GUI construction codes in Event-Dispatching thread for thread safety
