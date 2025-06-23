@@ -254,15 +254,33 @@ public class GameMain extends JPanel {
             container.add(gamePanel, "game");
 
             // Inline symbol chooser panel
-            JPanel chooserPanel = new JPanel(new BorderLayout());
-            chooserPanel.setBackground(COLOR_BG);
-            chooserPanel.setPreferredSize(new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT + 30));
+            // Inline symbol chooser panel with a custom background
+            JPanel chooserPanel = new JPanel(new BorderLayout()) {
+                private Image bg = new ImageIcon(
+                        GameMain.class.getResource("/images/bg choose your character.png")
+                ).getImage();
+
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    // 1) draw your background (either a solid fill or an image)
+                    if (bg != null) {
+                        g.drawImage(bg, 0, 0, getWidth(), getHeight(), null);
+                    } else {
+                        g.setColor(new Color(240, 240, 255));
+                        g.fillRect(0, 0, getWidth(), getHeight());
+                    }
+                }
+            };
+            chooserPanel.setPreferredSize(
+                    new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT + 30)
+            );
 
             // Tambahkan label judul di atas tombol
             JLabel chooseLabel = new JLabel("Choose your Character", SwingConstants.CENTER);
             chooseLabel.setFont(new Font("Arial", Font.BOLD, 24));
             chooseLabel.setForeground(Color.RED);
-            chooseLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+            chooseLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
             chooserPanel.add(chooseLabel, BorderLayout.NORTH);
 
             // Tambahkan panel pilihan mode
@@ -327,11 +345,33 @@ public class GameMain extends JPanel {
             gbc.gridx = 1;
             btnPanel.add(btnO, gbc);
 
-            // Bungkus btnPanel dengan panel wrapper agar benar-benar di tengah
-            JPanel wrapper = new JPanel(new GridBagLayout());
-            wrapper.setOpaque(false);
-            wrapper.add(btnPanel, new GridBagConstraints());
-            chooserPanel.add(wrapper, BorderLayout.CENTER);
+            JPanel choosePanel = new JPanel();
+            chooserPanel.setOpaque(false);
+            chooserPanel.setLayout(new BoxLayout(chooserPanel, BoxLayout.Y_AXIS));
+            chooserPanel.setPreferredSize(
+                    new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT + 30)
+            );
+
+// 1) title
+            chooseLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            chooserPanel.add(Box.createVerticalStrut(20));
+            chooserPanel.add(chooseLabel);
+
+// 2) icon buttons
+            JPanel iconWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+            iconWrapper.setOpaque(false);
+            iconWrapper.add(btnX);
+            iconWrapper.add(btnO);
+            iconWrapper.setAlignmentX(Component.CENTER_ALIGNMENT);
+            chooserPanel.add(Box.createVerticalStrut(20));
+            chooserPanel.add(iconWrapper);
+
+// 3) mode radios
+            modePanel.setOpaque(false);
+            modePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            chooserPanel.add(Box.createVerticalStrut(20));
+            chooserPanel.add(modePanel);
+            chooserPanel.add(Box.createVerticalGlue());
 
             // Assemble chooser buttons
             container.add(chooserPanel, "chooser");
