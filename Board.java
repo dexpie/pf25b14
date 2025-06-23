@@ -72,6 +72,47 @@ public class Board {
         return State.DRAW;
     }
 
+    public State evaluateState() {
+        // Cek baris
+        for (int r = 0; r < ROWS; r++) {
+            if (cells[r][0].content != Seed.NO_SEED &&
+                cells[r][0].content == cells[r][1].content &&
+                cells[r][1].content == cells[r][2].content) {
+                return (cells[r][0].content == Seed.CROSS) ? State.CROSS_WON : State.NOUGHT_WON;
+            }
+        }
+        // Cek kolom
+        for (int c = 0; c < COLS; c++) {
+            if (cells[0][c].content != Seed.NO_SEED &&
+                cells[0][c].content == cells[1][c].content &&
+                cells[1][c].content == cells[2][c].content) {
+                return (cells[0][c].content == Seed.CROSS) ? State.CROSS_WON : State.NOUGHT_WON;
+            }
+        }
+        // Cek diagonal utama
+        if (cells[0][0].content != Seed.NO_SEED &&
+            cells[0][0].content == cells[1][1].content &&
+            cells[1][1].content == cells[2][2].content) {
+            return (cells[0][0].content == Seed.CROSS) ? State.CROSS_WON : State.NOUGHT_WON;
+        }
+        // Cek diagonal anti
+        if (cells[0][2].content != Seed.NO_SEED &&
+            cells[0][2].content == cells[1][1].content &&
+            cells[1][1].content == cells[2][0].content) {
+            return (cells[0][2].content == Seed.CROSS) ? State.CROSS_WON : State.NOUGHT_WON;
+        }
+        // Cek apakah masih ada sel kosong
+        for (int r = 0; r < ROWS; r++) {
+            for (int c = 0; c < COLS; c++) {
+                if (cells[r][c].content == Seed.NO_SEED) {
+                    return State.PLAYING;
+                }
+            }
+        }
+        // Jika tidak ada pemenang dan tidak ada sel kosong, maka seri
+        return State.DRAW;
+    }
+
     /** Paint the board: background, grid lines, then cells */
     public void paint(Graphics g) {
         // 1) Draw background (solid color)
