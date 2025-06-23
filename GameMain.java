@@ -173,8 +173,15 @@ public class GameMain extends JPanel {
             chooserPanel.setBackground(COLOR_BG);
             chooserPanel.setPreferredSize(new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT + 30));
 
+            // Tambahkan label judul di atas tombol
+            JLabel chooseLabel = new JLabel("Choose your Character", SwingConstants.CENTER);
+            chooseLabel.setFont(new Font("Arial", Font.BOLD, 24));
+            chooseLabel.setForeground(Color.RED);
+            chooseLabel.setBorder(BorderFactory.createEmptyBorder(50, 0, 0, 0));
+            chooserPanel.add(chooseLabel, BorderLayout.NORTH);
+
             // Sub-panel to hold buttons in center
-            JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 140));
+            JPanel btnPanel = new JPanel(new GridBagLayout());
             btnPanel.setOpaque(false);
 
             // Load icons and scale to 60x60
@@ -211,9 +218,22 @@ public class GameMain extends JPanel {
                 frame.pack();
             });
 
+            // Tambahkan tombol ke btnPanel dengan GridBagLayout
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.insets = new Insets(0, 10, 0, 10);
+            btnPanel.add(btnX, gbc);
+            gbc.gridx = 1;
+            btnPanel.add(btnO, gbc);
+
+            // Bungkus btnPanel dengan panel wrapper agar benar-benar di tengah
+            JPanel wrapper = new JPanel(new GridBagLayout());
+            wrapper.setOpaque(false);
+            wrapper.add(btnPanel, new GridBagConstraints());
+            chooserPanel.add(wrapper, BorderLayout.CENTER);
+
             // Assemble chooser buttons
-            btnPanel.add(btnX);
-            btnPanel.add(btnO);
             chooserPanel.add(btnPanel, BorderLayout.CENTER);
             container.add(chooserPanel, "chooser");
 
