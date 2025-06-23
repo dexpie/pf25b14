@@ -287,7 +287,10 @@ public class GameMain extends JPanel {
             JPanel modePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
             modePanel.setOpaque(false);
             JRadioButton rbPvP = new JRadioButton("Player vs Player");
+            rbPvP.setFont(new Font("Dialog", Font.PLAIN, 16));
             JRadioButton rbPvC = new JRadioButton("Player vs Computer");
+            rbPvC.setFont(new Font("Dialog", Font.PLAIN, 16));
+
             rbPvP.setSelected(true);
             ButtonGroup modeGroup = new ButtonGroup();
             modeGroup.add(rbPvP);
@@ -354,11 +357,11 @@ public class GameMain extends JPanel {
 
 // 1) title
             chooseLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            chooserPanel.add(Box.createVerticalStrut(20));
+            chooserPanel.add(Box.createVerticalStrut(40));
             chooserPanel.add(chooseLabel);
 
 // 2) icon buttons
-            JPanel iconWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+            JPanel iconWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 0));
             iconWrapper.setOpaque(false);
             iconWrapper.add(btnX);
             iconWrapper.add(btnO);
