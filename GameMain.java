@@ -80,9 +80,14 @@ public class GameMain extends JPanel {
                                 : Seed.CROSS;
                         repaint();
 
-                        // Jika mode vs komputer dan giliran AI, AI bergerak otomatis
+                        // Jika mode vs komputer dan giliran AI, AI bergerak otomatis dengan delay
                         if (isVsComputer && currentState == State.PLAYING && currentPlayer == Seed.NOUGHT) {
-                            aiMove();
+                            Timer aiTimer = new Timer(500, evt -> {
+                                aiMove();
+                                ((Timer)evt.getSource()).stop();
+                            });
+                            aiTimer.setRepeats(false);
+                            aiTimer.start();
                         }
                     }
                 } else {
@@ -328,7 +333,6 @@ public class GameMain extends JPanel {
             chooserPanel.add(wrapper, BorderLayout.CENTER);
 
             // Assemble chooser buttons
-            chooserPanel.add(btnPanel, BorderLayout.CENTER);
             container.add(chooserPanel, "chooser");
 
             // Show chooser first
