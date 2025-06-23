@@ -24,6 +24,9 @@ public class GameMain extends JPanel {
     private Seed startingPlayer = Seed.CROSS; // Chosen starting player (default X)
     private JLabel statusBar;           // Status message display
 
+    // Tambahan: mode permainan
+    private boolean isVsComputer = false;
+
     /**
      * Constructor: set up the board UI and initial game state.
      */
@@ -62,9 +65,7 @@ public class GameMain extends JPanel {
                         // 1) X bergerak → play EAT_FOOD
                         if (currentPlayer == Seed.CROSS) {
                             SoundEffect.EAT_FOOD.play();
-                        }
-                        // 2) O bergerak → play EXPLODE
-                        else {
+                        } else {
                             SoundEffect.EXPLODE.play();
                         }
 
@@ -77,6 +78,12 @@ public class GameMain extends JPanel {
                         currentPlayer = (currentPlayer == Seed.CROSS)
                                 ? Seed.NOUGHT
                                 : Seed.CROSS;
+                        repaint();
+
+                        // Jika mode vs komputer dan giliran AI, AI bergerak otomatis
+                        if (isVsComputer && currentState == State.PLAYING && currentPlayer == Seed.NOUGHT) {
+                            aiMove();
+                        }
                     }
                 } else {
                     // Jika sudah selesai, klik ulang untuk restart
@@ -129,6 +136,14 @@ public class GameMain extends JPanel {
     }
 
     /**
+     * Set apakah permainan melawan komputer atau tidak.
+     * @param vsComputer true jika melawan komputer, false jika pemain vs pemain
+     */
+    public void setVsComputer(boolean vsComputer) {
+        this.isVsComputer = vsComputer;
+    }
+
+    /**
      * Render the board and update the status bar text.
      */
     @Override
@@ -151,6 +166,70 @@ public class GameMain extends JPanel {
             statusBar.setForeground(Color.RED);
             statusBar.setText("'O' Won! Click to play again.");
         }
+    }
+
+    /**
+     * Gerakan AI menggunakan algoritma Minimax.
+     */
+    private void aiMove() {
+        // AI (Minimax) hanya main jika masih PLAYING dan ada langkah
+        if (currentState == State.PLAYING) {
+            int[] move = findBestMove(currentPlayer);
+            if (move != null) {
+                currentState = board.stepGame(currentPlayer, move[0], move[1]);
+                // Play sound effect jika perlu
+                if (currentPlayer == Seed.CROSS) {
+                    SoundEffect.EAT_FOOD.play();
+                } else {
+                    SoundEffect.EXPLODE.play();
+                }
+                if (currentState != State.PLAYING) {
+                    SoundEffect.DIE.play();
+                }
+                currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+                repaint();
+            }
+        }
+    }
+
+    // Fungsi Minimax untuk AI
+    private int[] findBestMove(Seed aiSeed) {
+        int bestScore = Integer.MIN_VALUE;
+        int[] bestMove = null;
+        for (int r = 0; r < Board.ROWS; r++) {
+            for (int c = 0; c < Board.COLS; c++) {
+                if (board.cells[r][c].content == Seed.NO_SEED) {
+                    board.cells[r][c].content = aiSeed;
+                    int score = minimax(0, false, aiSeed, (aiSeed == Seed.CROSS ? Seed.NOUGHT : Seed.CROSS));
+                    board.cells[r][c].content = Seed.NO_SEED;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = new int[]{r, c};
+                    }
+                }
+            }
+        }
+        return bestMove;
+    }
+
+    private int minimax(int depth, boolean isMax, Seed aiSeed, Seed opponent) {
+        State eval = board.evaluateState();
+        if (eval == State.CROSS_WON) return (aiSeed == Seed.CROSS) ? 10 - depth : depth - 10;
+        if (eval == State.NOUGHT_WON) return (aiSeed == Seed.NOUGHT) ? 10 - depth : depth - 10;
+        if (eval == State.DRAW) return 0;
+        int best = isMax ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        for (int r = 0; r < Board.ROWS; r++) {
+            for (int c = 0; c < Board.COLS; c++) {
+                if (board.cells[r][c].content == Seed.NO_SEED) {
+                    board.cells[r][c].content = isMax ? aiSeed : opponent;
+                    int score = minimax(depth + 1, !isMax, aiSeed, opponent);
+                    board.cells[r][c].content = Seed.NO_SEED;
+                    if (isMax) best = Math.max(best, score);
+                    else best = Math.min(best, score);
+                }
+            }
+        }
+        return best;
     }
 
     /**
@@ -177,8 +256,21 @@ public class GameMain extends JPanel {
             JLabel chooseLabel = new JLabel("Choose your Character", SwingConstants.CENTER);
             chooseLabel.setFont(new Font("Arial", Font.BOLD, 24));
             chooseLabel.setForeground(Color.RED);
-            chooseLabel.setBorder(BorderFactory.createEmptyBorder(50, 0, 0, 0));
+            chooseLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
             chooserPanel.add(chooseLabel, BorderLayout.NORTH);
+
+            // Tambahkan panel pilihan mode
+            JPanel modePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+            modePanel.setOpaque(false);
+            JRadioButton rbPvP = new JRadioButton("Player vs Player");
+            JRadioButton rbPvC = new JRadioButton("Player vs Computer");
+            rbPvP.setSelected(true);
+            ButtonGroup modeGroup = new ButtonGroup();
+            modeGroup.add(rbPvP);
+            modeGroup.add(rbPvC);
+            modePanel.add(rbPvP);
+            modePanel.add(rbPvC);
+            chooserPanel.add(modePanel, BorderLayout.SOUTH);
 
             // Sub-panel to hold buttons in center
             JPanel btnPanel = new JPanel(new GridBagLayout());
@@ -199,6 +291,7 @@ public class GameMain extends JPanel {
             btnX.addActionListener(e -> {
                 gamePanel.setStartingPlayer(Seed.CROSS);
                 gamePanel.newGame();
+                gamePanel.setVsComputer(rbPvC.isSelected());
                 CardLayout cl = (CardLayout) container.getLayout();
                 cl.show(container, "game");
                 frame.pack();
@@ -213,6 +306,7 @@ public class GameMain extends JPanel {
             btnO.addActionListener(e -> {
                 gamePanel.setStartingPlayer(Seed.NOUGHT);
                 gamePanel.newGame();
+                gamePanel.setVsComputer(rbPvC.isSelected());
                 CardLayout cl = (CardLayout) container.getLayout();
                 cl.show(container, "game");
                 frame.pack();
