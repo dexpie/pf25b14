@@ -29,7 +29,7 @@ public class Board {
      */
     public Board() {
         // Uncomment to use an image background instead of solid color
-         bgImage = new ImageIcon(getClass().getResource("/images/bg.png")).getImage();
+        bgImage = new ImageIcon(getClass().getResource("/images/bg.png")).getImage();
         initGame();
     }
 
@@ -76,29 +76,29 @@ public class Board {
         // Cek baris
         for (int r = 0; r < ROWS; r++) {
             if (cells[r][0].content != Seed.NO_SEED &&
-                cells[r][0].content == cells[r][1].content &&
-                cells[r][1].content == cells[r][2].content) {
+                    cells[r][0].content == cells[r][1].content &&
+                    cells[r][1].content == cells[r][2].content) {
                 return (cells[r][0].content == Seed.CROSS) ? State.CROSS_WON : State.NOUGHT_WON;
             }
         }
         // Cek kolom
         for (int c = 0; c < COLS; c++) {
             if (cells[0][c].content != Seed.NO_SEED &&
-                cells[0][c].content == cells[1][c].content &&
-                cells[1][c].content == cells[2][c].content) {
+                    cells[0][c].content == cells[1][c].content &&
+                    cells[1][c].content == cells[2][c].content) {
                 return (cells[0][c].content == Seed.CROSS) ? State.CROSS_WON : State.NOUGHT_WON;
             }
         }
         // Cek diagonal utama
         if (cells[0][0].content != Seed.NO_SEED &&
-            cells[0][0].content == cells[1][1].content &&
-            cells[1][1].content == cells[2][2].content) {
+                cells[0][0].content == cells[1][1].content &&
+                cells[1][1].content == cells[2][2].content) {
             return (cells[0][0].content == Seed.CROSS) ? State.CROSS_WON : State.NOUGHT_WON;
         }
         // Cek diagonal anti
         if (cells[0][2].content != Seed.NO_SEED &&
-            cells[0][2].content == cells[1][1].content &&
-            cells[1][1].content == cells[2][0].content) {
+                cells[0][2].content == cells[1][1].content &&
+                cells[1][1].content == cells[2][0].content) {
             return (cells[0][2].content == Seed.CROSS) ? State.CROSS_WON : State.NOUGHT_WON;
         }
         // Cek apakah masih ada sel kosong
@@ -120,9 +120,9 @@ public class Board {
         g.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
         // Uncomment below to use an image background instead
-         if (bgImage != null) {
-             g.drawImage(bgImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT, null);
-         }
+        if (bgImage != null) {
+            g.drawImage(bgImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT, null);
+        }
 
         // 2) Draw the grid-lines
         g.setColor(COLOR_GRID);
