@@ -48,28 +48,41 @@ public class GameMain extends JPanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                int row = e.getY() / Cell.SIZE;  // Compute clicked row
-                int col = e.getX() / Cell.SIZE;  // Compute clicked column
+                int row = e.getY() / Cell.SIZE;
+                int col = e.getX() / Cell.SIZE;
 
                 if (currentState == State.PLAYING) {
-                    // If the cell is empty, make a move
-                    if (row >= 0 && row < Board.ROWS && col >= 0 && col < Board.COLS
+                    // Hanya jika sel masih kosong
+                    if (row >= 0 && row < Board.ROWS
+                            && col >= 0 && col < Board.COLS
                             && board.cells[row][col].content == Seed.NO_SEED) {
-                        currentState = board.stepGame(currentPlayer, row, col); // Execute move
-                        // Play sound based on new state
-                        if (currentState == State.PLAYING) {
+                        // Jalankan langkah dan update status
+                        currentState = board.stepGame(currentPlayer, row, col);
+
+                        // 1) X bergerak → play EAT_FOOD
+                        if (currentPlayer == Seed.CROSS) {
                             SoundEffect.EAT_FOOD.play();
-                        } else {
+                        }
+                        // 2) O bergerak → play EXPLODE
+                        else {
+                            SoundEffect.EXPLODE.play();
+                        }
+
+                        // Jika setelah langkah status bukan PLAYING → play DIE
+                        if (currentState != State.PLAYING) {
                             SoundEffect.DIE.play();
                         }
-                        // Switch turn
-                        currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+
+                        // 3) Ganti giliran
+                        currentPlayer = (currentPlayer == Seed.CROSS)
+                                ? Seed.NOUGHT
+                                : Seed.CROSS;
                     }
                 } else {
-                    // Restart game if it is over
+                    // Jika sudah selesai, klik ulang untuk restart
                     newGame();
                 }
-                repaint(); // Redraw board and status bar
+                repaint();  // Segarkan tampilan
             }
         });
     }
