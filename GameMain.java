@@ -116,7 +116,6 @@ public class GameMain extends JPanel {
             statusBar.setText("'O' Won! Click to play again.");
         }
     }
-// coba coba
 
     /** The entry "main" method */
     public static void main(String[] args) {
