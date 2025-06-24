@@ -11,6 +11,15 @@ public class WelcomePanel extends JPanel {
     private final JPanel container;
     private final Image bgImage;
 
+    // Tambahkan interface callback untuk login
+    public interface LoginListener {
+        void onLogin(String nickname);
+    }
+    private LoginListener loginListener;
+    public void setLoginListener(LoginListener listener) {
+        this.loginListener = listener;
+    }
+
     public WelcomePanel(JPanel container) {
         this.container = container;
         // Muat gambar background dari resources
@@ -28,7 +37,7 @@ public class WelcomePanel extends JPanel {
         loginButton.setFont(new Font("Arial", Font.BOLD, 20));
         loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         loginButton.setFocusPainted(false);
-        loginButton.addActionListener(e -> showChooser());
+        loginButton.addActionListener(e -> showLoginDialog());
         add(loginButton);
 
         // Jarak antar tombol: 40px
@@ -46,11 +55,16 @@ public class WelcomePanel extends JPanel {
         add(Box.createVerticalGlue());
     }
 
+    private void showLoginDialog() {
+        String nickname = JOptionPane.showInputDialog(this, "Masukkan nickname:", "Player");
+        if (nickname == null || nickname.trim().isEmpty()) nickname = "Player";
+        if (loginListener != null) loginListener.onLogin(nickname.trim());
+    }
+
     private void showChooser() {
         CardLayout cl = (CardLayout) container.getLayout();
         cl.show(container, "chooser");
     }
-
     private void showAboutDialog() {
         JOptionPane.showMessageDialog(
                 this,
