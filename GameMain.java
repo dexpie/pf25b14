@@ -410,11 +410,13 @@ public class GameMain extends JPanel {
             // gamePanel.setNickname(nickname.trim());
             container.add(gamePanel, "game");
 
+
             // Inline symbol chooser panel with custom background
             JPanel chooserPanel = new JPanel(new BorderLayout()) {
                 private Image bg = new ImageIcon(
                         GameMain.class.getResource("/images/bg choose your character.png")
                 ).getImage();
+
                 @Override
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
@@ -435,23 +437,71 @@ public class GameMain extends JPanel {
             chooseLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
             chooserPanel.add(chooseLabel, BorderLayout.NORTH);
 
-            // Tambahkan panel pilihan mode
-            JPanel modePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+            // Panel mode: radio buttons disusun vertikal
+            JPanel modePanel = new JPanel();
             modePanel.setOpaque(false);
-            JRadioButton rbPvP = new JRadioButton("Player vs Player");
-            rbPvP.setFont(new Font("Dialog", Font.PLAIN, 16));
-            JRadioButton rbPvC = new JRadioButton("Player vs Computer");
-            rbPvC.setFont(new Font("Dialog", Font.PLAIN, 16));
+            modePanel.setLayout(new BoxLayout(modePanel, BoxLayout.Y_AXIS));
+
+// Buat radio buttons
+            Font rf = new Font("Dialog", Font.PLAIN, 16);
+            JRadioButton rbPvP    = new JRadioButton("Player vs Player");
+            JRadioButton rbPvC    = new JRadioButton("Player vs Computer");
             JRadioButton rbOnline = new JRadioButton("Player vs Online");
-            rbOnline.setFont(new Font("Dialog", Font.PLAIN, 16));
-            rbPvP.setSelected(true);
-            ButtonGroup modeGroup = new ButtonGroup();
-            modeGroup.add(rbPvP);
-            modeGroup.add(rbPvC);
-            modeGroup.add(rbOnline);
+            rbPvP.setFont(rf);
+            rbPvC.setFont(rf);
+            rbOnline.setFont(rf);
+
+            Dimension p1 = rbPvP.getPreferredSize();
+            Dimension p2 = rbPvC.getPreferredSize();
+            Dimension p3 = rbOnline.getPreferredSize();
+            int maxWidth = Math.max(p1.width, Math.max(p2.width, p3.width));
+
+            int padding = 20;
+            Dimension uniformSize = new Dimension(maxWidth + padding, p1.height);
+
+            rbPvP.setPreferredSize(uniformSize);
+            rbPvC.setPreferredSize(uniformSize);
+            rbOnline.setPreferredSize(uniformSize);
+
+            rbPvP.setMaximumSize(uniformSize);
+            rbPvC.setMaximumSize(uniformSize);
+            rbOnline.setMaximumSize(uniformSize);
+
+// Supaya tombolnya rata tengah
+            rbPvP.setAlignmentX(Component.CENTER_ALIGNMENT);
+            rbPvC.setAlignmentX(Component.CENTER_ALIGNMENT);
+            rbOnline.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            JPanel modelPanel = new JPanel();
+            modePanel.setOpaque(false);
+            modePanel.setLayout(new BoxLayout(modePanel, BoxLayout.Y_AXIS));
+
             modePanel.add(rbPvP);
+            modePanel.add(Box.createVerticalStrut(10));
             modePanel.add(rbPvC);
+            modePanel.add(Box.createVerticalStrut(10));
             modePanel.add(rbOnline);
+            modePanel.add(Box.createVerticalStrut(10));
+
+            chooserPanel.add(modePanel, BorderLayout.SOUTH);
+
+
+// Kelompokkan agar cuma satu yang terpilih
+            ButtonGroup group = new ButtonGroup();
+            group.add(rbPvP);
+            group.add(rbPvC);
+            group.add(rbOnline);
+            rbPvP.setSelected(true);
+
+// Tambahkan dengan jarak antar tombol
+            modePanel.add(rbPvP);
+            modePanel.add(Box.createVerticalStrut(10));
+            modePanel.add(rbPvC);
+            modePanel.add(Box.createVerticalStrut(10));
+            modePanel.add(rbOnline);
+            modePanel.add(Box.createVerticalStrut(20));  // jarak bawah
+
+// Pasang ke chooserPanel
             chooserPanel.add(modePanel, BorderLayout.SOUTH);
 
             // Sub-panel to hold buttons in center
@@ -462,6 +512,7 @@ public class GameMain extends JPanel {
             ImageIcon iconX = new ImageIcon(rawX.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH));
             ImageIcon iconO = new ImageIcon(rawO.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH));
             JButton btnX = new JButton(iconX);
+
             btnX.setPreferredSize(new Dimension(100, 100));
             btnX.setBorder(BorderFactory.createEmptyBorder());
             btnX.setFocusPainted(false);
