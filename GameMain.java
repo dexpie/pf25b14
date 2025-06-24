@@ -248,12 +248,12 @@ public class GameMain extends JPanel {
 
             // Create a container with CardLayout to swap views
             JPanel container = new JPanel(new CardLayout());
+            container.add(new WelcomePanel(container), "welcome");
 
             // Create and add the game panel
             GameMain gamePanel = new GameMain();
             container.add(gamePanel, "game");
 
-            // Inline symbol chooser panel
             // Inline symbol chooser panel with a custom background
             JPanel chooserPanel = new JPanel(new BorderLayout()) {
                 private Image bg = new ImageIcon(
@@ -275,7 +275,7 @@ public class GameMain extends JPanel {
             chooserPanel.setPreferredSize(
                     new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT + 30)
             );
-
+            container.add(chooserPanel, "chooser");
             // Tambahkan label judul di atas tombol
             JLabel chooseLabel = new JLabel("Choose your Character", SwingConstants.CENTER);
             chooseLabel.setFont(new Font("Arial", Font.BOLD, 24));
@@ -381,7 +381,7 @@ public class GameMain extends JPanel {
 
             // Show chooser first
             frame.setContentPane(container);
-            ((CardLayout) container.getLayout()).show(container, "chooser");
+            ((CardLayout) container.getLayout()).show(container, "welcome");
 
             frame.pack();                           // Size window to content
             frame.setLocationRelativeTo(null);      // Center on screen
