@@ -68,9 +68,10 @@ public class GameMain extends JPanel {
     public GameMain() {
         // Set layout, borders, and background for game panel
         setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT));
-        setBorder(BorderFactory.createLineBorder(COLOR_BG_STATUS, 0, false));
+        setPreferredSize(new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT + 30));
+        setBorder(BorderFactory.createLineBorder(COLOR_BG_STATUS, 2, false));
         setBackground(COLOR_BG);
+
 
         // Initialize board model and UI listeners
         board = new Board();               // Create the game board
@@ -749,10 +750,9 @@ public class GameMain extends JPanel {
         newGame();
         repaint();
     }
-
     // Tampilkan leaderboard dialog
     private void showLeaderboardDialog() {
         leaderboardPanel.refreshLeaderboard();
         JOptionPane.showMessageDialog(this, leaderboardPanel, "Leaderboard", JOptionPane.PLAIN_MESSAGE);
-    }
+}
 }
