@@ -1,5 +1,7 @@
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  * WelcomePanel: Menampilkan layar sambutan dengan gambar latar
@@ -10,6 +12,7 @@ public class WelcomePanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private final JPanel container;
     private final Image bgImage;
+    private float volume = 0.8f; // Volume default (80%)
 
     // Tambahkan interface callback untuk login
     public interface LoginListener {
@@ -51,8 +54,60 @@ public class WelcomePanel extends JPanel {
         aboutButton.addActionListener(e -> showAboutDialog());
         add(aboutButton);
 
+        // Jarak antar tombol: 10px
+        add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // Tombol SETTING
+        JButton settingButton = new JButton("SETTING");
+        settingButton.setFont(new Font("Arial", Font.BOLD, 20));
+        settingButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        settingButton.setFocusPainted(false);
+        settingButton.addActionListener(e -> showSettingDialog());
+        add(settingButton);
+
         // Sisa ruang di bawah
         add(Box.createVerticalGlue());
+    }
+
+    private void showSettingDialog() {
+        // Buat panel untuk dialog setting
+        JPanel settingPanel = new JPanel();
+        settingPanel.setLayout(new BoxLayout(settingPanel, BoxLayout.Y_AXIS));
+        settingPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Label volume
+        JLabel volumeLabel = new JLabel("Volume: " + (int)(volume * 100) + "%");
+        volumeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        settingPanel.add(volumeLabel);
+
+        // Slider volume
+        JSlider volumeSlider = new JSlider(0, 100, (int)(volume * 100));
+        volumeSlider.setMajorTickSpacing(25);
+        volumeSlider.setMinorTickSpacing(5);
+        volumeSlider.setPaintTicks(true);
+        volumeSlider.setPaintLabels(true);
+        volumeSlider.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        volumeSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                volume = volumeSlider.getValue() / 100f;
+                volumeLabel.setText("Volume: " + volumeSlider.getValue() + "%");
+                // Di sini Anda bisa menambahkan kode untuk mengatur volume audio
+                // Contoh: AudioManager.setVolume(volume);
+            }
+        });
+
+        settingPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        settingPanel.add(volumeSlider);
+
+        // Tampilkan dialog
+        JOptionPane.showMessageDialog(
+                this,
+                settingPanel,
+                "Audio Settings",
+                JOptionPane.PLAIN_MESSAGE
+        );
     }
 
     private void showLoginDialog() {
@@ -65,11 +120,12 @@ public class WelcomePanel extends JPanel {
         CardLayout cl = (CardLayout) container.getLayout();
         cl.show(container, "chooser");
     }
+
     private void showAboutDialog() {
         JOptionPane.showMessageDialog(
                 this,
                 "Tic Tac Toe Game\nDeveloped by Your Name",
-                "How To Pla",
+                "How To Play",
                 JOptionPane.INFORMATION_MESSAGE
         );
     }
