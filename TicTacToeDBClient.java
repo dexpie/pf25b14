@@ -7,7 +7,7 @@ public class TicTacToeDBClient {
     private final String user = "avnadmin";
     private final String password = "AVNS_GcFcyt6nFyhLPEB185w";
     private final String gameId;
-    private final String player; // "X" atau "O"
+    private final String player;
     private int lastMove = 0;
     private GameMain gameMain;
 
@@ -17,7 +17,6 @@ public class TicTacToeDBClient {
         this.player = player;
     }
 
-    // Simpan langkah ke database
     public void sendMove(int row, int col) throws Exception {
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
             int moveNumber = getLastMoveNumber(conn) + 1;
@@ -32,7 +31,6 @@ public class TicTacToeDBClient {
         }
     }
 
-    // Polling langkah lawan setiap 1 detik
     public void startPolling() {
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
@@ -49,7 +47,6 @@ public class TicTacToeDBClient {
                         int row = rs.getInt("row");
                         int col = rs.getInt("col");
                         if (!movePlayer.equals(player)) {
-                            // Panggil method untuk update board lawan
                             gameMain.applyRemoteMove(row, col, movePlayer.equals("X") ? Seed.CROSS : Seed.NOUGHT);
                         }
                         lastMove = moveNum;
@@ -58,7 +55,7 @@ public class TicTacToeDBClient {
                     e.printStackTrace();
                 }
             }
-        }, 0, 1000); // polling setiap 1 detik
+        }, 0, 1000);
     }
 
     private int getLastMoveNumber(Connection conn) throws SQLException {

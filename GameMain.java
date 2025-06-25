@@ -5,88 +5,66 @@ import java.net.NetworkInterface;
 import java.util.Enumeration;
 import javax.swing.*;
 
-/**
- * Tic-Tac-Toe: Integrated custom symbol chooser and game panel in one class.
- * The main method displays a chooser interface first, then switches to the game.
- */
 public class GameMain extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    // ----- Constants for UI -----
-    public static final String TITLE = "Tic Tac Toe";                          // Window title
-    public static final Color COLOR_BG = Color.WHITE;                           // Background color
-    public static final Color COLOR_BG_STATUS = new Color(216, 216, 216);       // Status bar background
-    public static final Color COLOR_CROSS = new Color(239, 105, 80);            // X color
-    public static final Color COLOR_NOUGHT = new Color(64, 154, 225);           // O color
-    public static final Font FONT_STATUS = new Font("OCR A Extended", Font.PLAIN, 14); // Status font
+    public static final String TITLE = "Tic Tac Toe";                          
+    public static final Color COLOR_BG = Color.WHITE;                           
+    public static final Color COLOR_BG_STATUS = new Color(216, 216, 216);       
+    public static final Color COLOR_CROSS = new Color(239, 105, 80);            
+    public static final Color COLOR_NOUGHT = new Color(64, 154, 225);           
+    public static final Font FONT_STATUS = new Font("OCR A Extended", Font.PLAIN, 14); 
 
-    // ----- Game state variables -----
-    private Board board;                // The game board model
-    private State currentState;         // Current state (PLAYING, DRAW, CROSS_WON, NOUGHT_WON)
-    private Seed currentPlayer;         // Current player's turn
-    private Seed startingPlayer = Seed.CROSS; // Chosen starting player (default X)
-    private JLabel statusBar;           // Status message display
+    private Board board;                
+    private State currentState;         
+    private Seed currentPlayer;         
+    private Seed startingPlayer = Seed.CROSS; 
+    private JLabel statusBar;           
 
-    // Tambahan: mode permainan
     private boolean isVsComputer = false;
-    private boolean isOnline = false; // Tambahkan variabel mode online
-    // Tambahan: referensi ke client
+    private boolean isOnline = false; 
+    
     private TicTacToeClient client;
-    private boolean isClientConnected = false; // Status koneksi client
-    private boolean isOpponentConnected = false; // Status lawan sudah join
+    private boolean isClientConnected = false; 
+    private boolean isOpponentConnected = false; 
 
-    // Komponen chat
     private JTextArea chatArea;
     private JTextField chatInput;
     private JButton sendButton;
     private JPanel chatPanel;
 
-    // Tambahan: variabel nickname
     private String nickname = "Player";
     private String opponentNickname = "Opponent";
 
-    // Tambahan: seed milik client ini (X atau O)
     private Seed mySeed;
 
-    // Tambahan: panel rematch
     private JPanel rematchPanel;
 
-    // Tambahan: flag rematch online
     private boolean isRematchRequested = false;
     private boolean isOpponentRematchRequested = false;
 
-    // Tambahan: leaderboard panel
     private LeaderboardPanel leaderboardPanel;
 
-    // Tambahan: level AI
-    private String aiLevel = "medium"; // default
+    private String aiLevel = "medium"; 
 
-    // Tambahan: tombol kembali dan label statistik
     private JButton backButton;
     private JLabel statsLabel;
-    private JLabel resultLabel; // Label hasil game
+    private JLabel resultLabel; 
 
-    // Tambahan: flag untuk menampilkan popup hasil
     private boolean hasShownResultPopup = false;
 
-    /**
-     * Constructor: set up the board UI and initial game state.
-     */
     public GameMain() {
-        // Set layout, borders, and background for game panel
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT + 30));
         setBorder(BorderFactory.createLineBorder(COLOR_BG_STATUS, 2, false));
         setBackground(COLOR_BG);
 
-        // Initialize board model and UI listeners
-        board = new Board();               // Create the game board
-        installMouseListener();            // Handle clicks on cells
-        createStatusBar();                 // Set up the status bar at bottom
-        initGame();                        // Prepare initial empty board state
+        board = new Board();               
+        installMouseListener();            
+        createStatusBar();                 
+        initGame();                        
 
         leaderboardPanel = new LeaderboardPanel();
-        // Tambahkan tombol leaderboard di sudut atas
         JButton leaderboardButton = new JButton("Leaderboard");
         leaderboardButton.addActionListener(e -> showLeaderboardDialog());
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -95,9 +73,6 @@ public class GameMain extends JPanel {
         add(topPanel, BorderLayout.NORTH);
     }
 
-    /**
-     * Set up a mouse listener to process clicks and play moves.
-     */
     private void installMouseListener() {
         addMouseListener(new MouseAdapter() {
             @Override
@@ -107,16 +82,12 @@ public class GameMain extends JPanel {
 
                 if (isOnline) {
                     if (!isClientConnected || !isOpponentConnected) {
-                        // Jangan izinkan klik sebelum client dan lawan terhubung
                         return;
                     }
-                    // Hanya boleh klik jika giliran sendiri
                     if (currentPlayer != mySeed) return;
-                    // Hanya jika sel masih kosong dan status PLAYING
                     if (row >= 0 && row < Board.ROWS && col >= 0 && col < Board.COLS
                             && board.cells[row][col].content == Seed.NO_SEED
                             && currentState == State.PLAYING) {
-                        // Update board lokal
                         currentState = board.stepGame(currentPlayer, row, col);
                         if (currentPlayer == Seed.CROSS) {
                             SoundEffect.EAT_FOOD.play();
@@ -126,9 +97,7 @@ public class GameMain extends JPanel {
                         if (currentState != State.PLAYING) {
                             SoundEffect.DIE.play();
                         }
-                        // Kirim langkah ke lawan/server
                         sendMoveOnline(row, col);
-                        // Ganti giliran (lock input)
                         currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
                         repaint();
                         showResultPopupIfNeeded();
@@ -137,33 +106,27 @@ public class GameMain extends JPanel {
                 }
 
                 if (currentState == State.PLAYING) {
-                    // Hanya jika sel masih kosong
                     if (row >= 0 && row < Board.ROWS
                             && col >= 0 && col < Board.COLS
                             && board.cells[row][col].content == Seed.NO_SEED) {
-                        // Jalankan langkah dan update status
                         currentState = board.stepGame(currentPlayer, row, col);
 
-                        // 1) X bergerak → play EAT_FOOD
                         if (currentPlayer == Seed.CROSS) {
                             SoundEffect.EAT_FOOD.play();
                         } else {
                             SoundEffect.EXPLODE.play();
                         }
 
-                        // Jika setelah langkah status bukan PLAYING → play DIE
                         if (currentState != State.PLAYING) {
                             SoundEffect.DIE.play();
                         }
 
-                        // 3) Ganti giliran
                         currentPlayer = (currentPlayer == Seed.CROSS)
                                 ? Seed.NOUGHT
                                 : Seed.CROSS;
                         repaint();
                         showResultPopupIfNeeded();
 
-                        // Jika mode vs komputer dan giliran AI, AI bergerak otomatis dengan delay
                         if (isVsComputer && currentState == State.PLAYING && currentPlayer == Seed.NOUGHT) {
                             Timer aiTimer = new Timer(500, evt -> {
                                 aiMove();
@@ -174,17 +137,13 @@ public class GameMain extends JPanel {
                         }
                     }
                 } else {
-                    // Jika sudah selesai, klik ulang untuk restart
                     newGame();
                 }
-                repaint();  // Segarkan tampilan
+                repaint();  
             }
         });
     }
 
-    /**
-     * Create the status bar label at the bottom of the panel.
-     */
     private void createStatusBar() {
         statusBar = new JLabel();
         statusBar.setFont(FONT_STATUS);
@@ -192,12 +151,10 @@ public class GameMain extends JPanel {
         statusBar.setOpaque(true);
         statusBar.setPreferredSize(new Dimension(300, 30));
         statusBar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 12));
-        // Tampilkan IP lokal di status bar saat awal
         String localIp = getLocalIpAddress();
         statusBar.setText("Your IP: " + localIp + " | Nickname: " + nickname);
         add(statusBar, BorderLayout.PAGE_END);
 
-        // Tambahan: tombol kembali dan statistik
         backButton = new JButton("Kembali");
         backButton.setVisible(false);
         backButton.addActionListener(e -> onBackToMenu());
@@ -214,7 +171,6 @@ public class GameMain extends JPanel {
         rematchPanel.add(statsLabel);
         add(rematchPanel, BorderLayout.CENTER);
 
-        // Tambahkan panel chat di bawah status bar
         chatPanel = new JPanel(new BorderLayout());
         chatPanel.setBorder(BorderFactory.createTitledBorder("Chat"));
         chatArea = new JTextArea(5, 30);
@@ -230,19 +186,16 @@ public class GameMain extends JPanel {
         inputPanel.add(sendButton, BorderLayout.EAST);
         chatPanel.add(inputPanel, BorderLayout.SOUTH);
         add(chatPanel, BorderLayout.AFTER_LAST_LINE);
-        chatPanel.setVisible(false); // Hanya tampil saat online
+        chatPanel.setVisible(false); 
 
-        // Event kirim chat
         sendButton.addActionListener(e -> sendChatMessage());
         chatInput.addActionListener(e -> sendChatMessage());
     }
 
-    // Tampilkan chat panel jika online
     private void setChatPanelVisible(boolean visible) {
         if (chatPanel != null) chatPanel.setVisible(visible);
     }
 
-    // Kirim pesan chat ke client
     private void sendChatMessage() {
         String msg = chatInput.getText().trim();
         if (!msg.isEmpty() && client != null && isOnline) {
@@ -252,13 +205,11 @@ public class GameMain extends JPanel {
         }
     }
 
-    // Tampilkan pesan chat di area chat
     public void appendChat(String msg) {
         chatArea.append(msg + "\n");
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
     }
 
-    // Fungsi untuk mendapatkan IP lokal
     private String getLocalIpAddress() {
         try {
             Enumeration<NetworkInterface> nics = NetworkInterface.getNetworkInterfaces();
@@ -274,58 +225,39 @@ public class GameMain extends JPanel {
                 }
             }
         } catch (Exception e) {
-            // abaikan
         }
         return "Tidak ditemukan";
     }
 
-    /**
-     * Initialize the board cells and state for a new game.
-     */
     private void initGame() {
         for (int r = 0; r < Board.ROWS; r++) {
             for (int c = 0; c < Board.COLS; c++) {
                 board.cells[r][c].content = Seed.NO_SEED;
             }
         }
-        currentState = State.PLAYING; // Ready to play
+        currentState = State.PLAYING; 
     }
 
-    /**
-     * Restart the game using the chosen starting player.
-     */
     public void newGame() {
-        hasShownResultPopup = false; // Reset flag agar popup hanya muncul sekali per game
-        initGame();                          // Reset board state
-        currentPlayer = startingPlayer;      // Set the initial turn
+        hasShownResultPopup = false; 
+        initGame();                          
+        currentPlayer = startingPlayer;      
     }
 
-    /**
-     * Set which player (X or O) starts first.
-     * @param seed Seed.CROSS or Seed.NOUGHT
-     */
     public void setStartingPlayer(Seed seed) {
         this.startingPlayer = seed;
     }
 
-    /**
-     * Set apakah permainan melawan komputer atau tidak.
-     * @param vsComputer true jika melawan komputer, false jika pemain vs pemain
-     */
     public void setVsComputer(boolean vsComputer) {
         this.isVsComputer = vsComputer;
     }
 
-    /**
-     * Render the board and update the status bar text.
-     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         setBackground(COLOR_BG);
-        board.paint(g);                       // Draw grid and any X/O symbols
+        board.paint(g);                       
 
-        // Update status bar based on game state
         if (isOnline && !isClientConnected) {
             statusBar.setForeground(Color.BLUE);
             statusBar.setText("Menghubungkan ke server... | Nickname: " + nickname);
@@ -360,13 +292,11 @@ public class GameMain extends JPanel {
             }
         }
 
-        // Tampilkan tombol rematch, kembali, dan statistik jika game selesai
         boolean gameOver = (currentState == State.DRAW || currentState == State.CROSS_WON || currentState == State.NOUGHT_WON);
-        backButton.setVisible(false); // Sembunyikan tombol kembali
-        statsLabel.setVisible(false); // Jangan tampilkan statistik
-        resultLabel.setVisible(false); // Tidak perlu label lagi, pakai popup
+        backButton.setVisible(false); 
+        statsLabel.setVisible(false); 
+        resultLabel.setVisible(false); 
         if (gameOver) {
-            // statsLabel.setText(getPlayerStatsText()); // Hilangkan pengisian teks statistik
         }
         rematchPanel.revalidate();
         rematchPanel.repaint();
@@ -377,19 +307,21 @@ public class GameMain extends JPanel {
         if (gameOver && !hasShownResultPopup) {
             String msg;
             if (currentState == State.DRAW) {
-                msg = "Seri!";
-            } else if ((currentState == State.CROSS_WON && currentPlayer == Seed.NOUGHT) || (currentState == State.NOUGHT_WON && currentPlayer == Seed.CROSS)) {
-                msg = "Menang!";
+                msg = "Draw!";
+            } else if (currentState == State.CROSS_WON) {
+                msg = "X Win!";
+            } else if (currentState == State.NOUGHT_WON) {
+                msg = "O Win!";
             } else {
-                msg = "Kalah!";
+                msg = "Game Over!";
             }
             JOptionPane.showMessageDialog(this, msg, "Hasil Permainan", JOptionPane.INFORMATION_MESSAGE);
             int opt = JOptionPane.showOptionDialog(this, "Apa yang ingin Anda lakukan?", "Game Selesai",
                     JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
                     new String[]{"Rematch", "Back"}, "Rematch");
-            if (opt == 1) { // Back
+            if (opt == 1) { 
                 onBackToMenu();
-            } else if (opt == 0) { // Rematch
+            } else if (opt == 0) { 
                 SwingUtilities.invokeLater(this::newGame);
             }
             hasShownResultPopup = true;
@@ -398,9 +330,6 @@ public class GameMain extends JPanel {
         }
     }
 
-    /**
-     * Gerakan AI menggunakan algoritma Minimax.
-     */
     private void aiMove() {
         if (currentState == State.PLAYING) {
             int[] move = null;
@@ -409,12 +338,11 @@ public class GameMain extends JPanel {
             } else if ("medium".equals(aiLevel)) {
                 if (Math.random() < 0.5) move = randomMove();
                 else move = findBestMove(currentPlayer);
-            } else { // hard
+            } else { 
                 move = findBestMove(currentPlayer);
             }
             if (move != null) {
                 currentState = board.stepGame(currentPlayer, move[0], move[1]);
-                // Play sound effect jika perlu
                 if (currentPlayer == Seed.CROSS) {
                     SoundEffect.EAT_FOOD.play();
                 } else {
@@ -430,7 +358,6 @@ public class GameMain extends JPanel {
         }
     }
 
-    // Fungsi random move untuk AI easy/medium
     private int[] randomMove() {
         java.util.List<int[]> empty = new java.util.ArrayList<>();
         for (int r = 0; r < Board.ROWS; r++) {
@@ -444,7 +371,6 @@ public class GameMain extends JPanel {
         return empty.get((int)(Math.random() * empty.size()));
     }
 
-    // Fungsi Minimax untuk AI
     private int[] findBestMove(Seed aiSeed) {
         int bestScore = Integer.MIN_VALUE;
         int[] bestMove = null;
@@ -485,14 +411,10 @@ public class GameMain extends JPanel {
         return best;
     }
 
-    /**
-     * Application entry point: display symbol chooser, then game panel.
-     */
     public static void main(String[] args) {
         SoundEffect.init();
         SoundEffect.setVolume(SoundEffect.Volume.MEDIUM);
         SoundEffect.BACKSOUND.playLoop();
-        // Console login before showing any GUI
         boolean loginSuccess = false;
         while (!loginSuccess) {
             loginSuccess = LoginUsername.WelcomePanel.consoleLogin();
@@ -500,7 +422,6 @@ public class GameMain extends JPanel {
                 System.out.println("Coba lagi atau tekan Ctrl+C untuk keluar.");
             }
         }
-        // Setelah login sukses, baru tampilkan GUI
         SwingUtilities.invokeLater(() -> {
             final JFrame frame = new JFrame(TITLE);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -508,7 +429,6 @@ public class GameMain extends JPanel {
             final GameMain gamePanel = new GameMain();
             container.add(gamePanel, "game");
 
-            // Inline symbol chooser panel with custom background
             JPanel chooserPanel = new JPanel(new BorderLayout()) {
                 private Image bg = new ImageIcon(
                         GameMain.class.getResource("/images/choose.jpg")
@@ -526,14 +446,12 @@ public class GameMain extends JPanel {
             };
             chooserPanel.setPreferredSize(new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT + 30));
 
-            // Tambahkan label judul di atas tombol
             JLabel chooseLabel = new JLabel("Choose your Character", SwingConstants.CENTER);
             chooseLabel.setFont(new Font("Arial", Font.BOLD, 24));
             chooseLabel.setForeground(Color.RED);
             chooseLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
             chooserPanel.add(chooseLabel, BorderLayout.NORTH);
 
-            // Sub-panel to hold buttons in center
             JPanel btnPanel = new JPanel(new GridBagLayout());
             btnPanel.setOpaque(false);
             ImageIcon rawX = new ImageIcon(GameMain.class.getResource("/images/cross.png"));
@@ -563,7 +481,6 @@ public class GameMain extends JPanel {
             chooserPanel.add(wrapper, BorderLayout.CENTER);
             container.add(chooserPanel, "chooser");
 
-            // Handler untuk tombol X dan O
             ActionListener characterSelectListener = e -> {
                 if (e.getSource() == btnX) {
                     gamePanel.setStartingPlayer(Seed.CROSS);
@@ -572,7 +489,6 @@ public class GameMain extends JPanel {
                     gamePanel.setStartingPlayer(Seed.NOUGHT);
                     gamePanel.setMySeed(Seed.NOUGHT);
                 }
-                // Pop-up pilihan mode
                 String[] modes = {"Player vs Player", "Player vs Computer", "Player vs Online"};
                 int mode = JOptionPane.showOptionDialog(frame, "Pilih mode permainan:", "Mode Permainan",
                         JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, modes, modes[0]);
@@ -582,7 +498,6 @@ public class GameMain extends JPanel {
                 } else if (mode == 1) {
                     gamePanel.setOnline(false);
                     gamePanel.setVsComputer(true);
-                    // Popup pilih level AI
                     String[] levels = {"Easy", "Medium", "Hard"};
                     int ai = JOptionPane.showOptionDialog(frame, "Pilih tingkat kesulitan AI:", "AI Level",
                             JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, levels, levels[1]);
@@ -616,9 +531,7 @@ public class GameMain extends JPanel {
         });
     }
 
-    // Placeholder: implementasikan pengiriman langkah ke server/client
     private void sendMoveOnline(int row, int col) {
-        // Kirim langkah ke client jika sudah ada
         if (client != null) {
             client.sendMove(row, col);
         } else {
@@ -626,12 +539,10 @@ public class GameMain extends JPanel {
         }
     }
 
-    // Dipanggil dari client saat menerima langkah lawan
     public void applyRemoteMove(int row, int col, Seed seed) {
         if (row >= 0 && row < Board.ROWS && col >= 0 && col < Board.COLS) {
             if (board.cells[row][col].content == Seed.NO_SEED && currentState == State.PLAYING) {
                 currentState = board.stepGame(seed, row, col);
-                // Mainkan sound effect jika perlu
                 if (seed == Seed.CROSS) {
                     SoundEffect.EAT_FOOD.play();
                 } else {
@@ -640,44 +551,36 @@ public class GameMain extends JPanel {
                 if (currentState != State.PLAYING) {
                     SoundEffect.DIE.play();
                 }
-                // Ganti giliran
                 currentPlayer = (seed == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
                 repaint();
             }
         }
     }
 
-    // Dipanggil dari client saat menerima nickname lawan
     public void onOpponentNickname(String nickname) {
         setOpponentNickname(nickname);
         repaint();
     }
 
-    // Tambahkan setter client
     public void setClient(TicTacToeClient client) {
         this.client = client;
-        // Jangan reset isClientConnected di sini, biarkan event client yang mengatur
     }
 
-    // Dipanggil dari client saat koneksi berhasil
     public void onClientConnected() {
         this.isClientConnected = true;
         repaint();
     }
 
-    // Dipanggil dari client saat lawan sudah join
     public void onOpponentConnected() {
         this.isOpponentConnected = true;
         repaint();
     }
 
-    // Tampilkan chat panel saat online
     public void setOnline(boolean online) {
         this.isOnline = online;
         setChatPanelVisible(online);
     }
 
-    // Setter dan getter untuk nickname
     public void setNickname(String nickname) {
         this.nickname = nickname;
     }
@@ -685,7 +588,6 @@ public class GameMain extends JPanel {
         return nickname;
     }
 
-    // Setter dan getter untuk nickname lawan
     public void setOpponentNickname(String nickname) {
         this.opponentNickname = nickname;
     }
@@ -693,7 +595,6 @@ public class GameMain extends JPanel {
         return opponentNickname;
     }
 
-    // Setter untuk mySeed
     public void setMySeed(Seed mySeed) {
         this.mySeed = mySeed;
     }
@@ -701,7 +602,6 @@ public class GameMain extends JPanel {
         return mySeed;
     }
 
-    // Setter untuk aiLevel
     public void setAiLevel(String level) {
         this.aiLevel = level;
     }
@@ -718,7 +618,6 @@ public class GameMain extends JPanel {
         }
     }
 
-    // Dipanggil dari client saat menerima sinyal rematch dari lawan
     public void onOpponentRematch() {
         isOpponentRematchRequested = true;
         if (isRematchRequested && isOpponentRematchRequested) {
@@ -726,7 +625,6 @@ public class GameMain extends JPanel {
         }
     }
 
-    // Reset board dan flag rematch
     private void doRematchReset() {
         isRematchRequested = false;
         isOpponentRematchRequested = false;
@@ -734,15 +632,12 @@ public class GameMain extends JPanel {
         repaint();
     }
 
-    // Tampilkan leaderboard dialog
     private void showLeaderboardDialog() {
         leaderboardPanel.refreshLeaderboard();
         JOptionPane.showMessageDialog(this, leaderboardPanel, "Leaderboard", JOptionPane.PLAIN_MESSAGE);
     }
 
-    // Fungsi kembali ke menu utama
     private void onBackToMenu() {
-        // Cari parent JFrame dan CardLayout, lalu kembali ke welcome/chooser
         java.awt.Container parent = this.getParent();
         while (parent != null && !(parent instanceof JFrame)) {
             parent = parent.getParent();
@@ -757,7 +652,6 @@ public class GameMain extends JPanel {
         }
     }
 
-    // Fungsi statistik player (dummy, bisa diambil dari LeaderboardUtil)
     private String getPlayerStatsText() {
         int win = LeaderboardUtil.getWinCount(nickname);
         int lose = LeaderboardUtil.getLoseCount(nickname);

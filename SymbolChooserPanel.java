@@ -2,29 +2,18 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
-/**
- * Panel custom untuk memilih simbol X atau O sebelum memulai permainan.
- */
 public class SymbolChooserPanel extends JPanel {
-    /**
-     * Listener callback yang akan dipanggil setelah simbol dipilih.
-     */
     public interface SymbolChoiceListener {
         void symbolChosen(Seed chosen);
     }
 
     private final SymbolChoiceListener listener;
 
-    /**
-     * Buat panel dengan dua tombol ikon X dan O.
-     * @param listener callback yang menerima pilihan Seed.CROSS atau Seed.NOUGHT
-     */
     public SymbolChooserPanel(SymbolChoiceListener listener) {
         this.listener = listener;
         setLayout(new FlowLayout(FlowLayout.CENTER, 40, 40));
         setBackground(GameMain.COLOR_BG);
 
-        // Load ikon X dan O (pastikan file cross.png & nought.png ada di resources)
         ImageIcon iconX = new ImageIcon(getClass().getResource("/images/cross.png"));
         ImageIcon iconO = new ImageIcon(getClass().getResource("/images/nought.png"));
 

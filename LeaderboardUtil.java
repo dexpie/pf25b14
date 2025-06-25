@@ -64,7 +64,6 @@ public class LeaderboardUtil {
         return result;
     }
 
-    // Tambahkan method untuk insert nickname ke database jika belum ada
     public static void ensureNicknameExists(String nickname) {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
             String sql = "INSERT INTO leaderboard (nickname, win, draw, lose) VALUES (?, 0, 0, 0) ON DUPLICATE KEY UPDATE nickname=nickname";
@@ -75,5 +74,59 @@ public class LeaderboardUtil {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static int getWinCount(String nickname) {
+        int win = 0;
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
+            String sql = "SELECT win FROM leaderboard WHERE nickname = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, nickname);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        win = rs.getInt("win");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return win;
+    }
+
+    public static int getLoseCount(String nickname) {
+        int lose = 0;
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
+            String sql = "SELECT lose FROM leaderboard WHERE nickname = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, nickname);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        lose = rs.getInt("lose");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return lose;
+    }
+
+    public static int getDrawCount(String nickname) {
+        int draw = 0;
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
+            String sql = "SELECT draw FROM leaderboard WHERE nickname = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, nickname);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        draw = rs.getInt("draw");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return draw;
     }
 }

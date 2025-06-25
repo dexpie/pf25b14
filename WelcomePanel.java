@@ -30,7 +30,7 @@ public class WelcomePanel extends JPanel {
     public WelcomePanel(JPanel container) {
         this.container = container;
         // Muat gambar background dari resources
-        bgImage = new ImageIcon(getClass().getResource("/images/welcome.gif")).getImage();
+        bgImage = new ImageIcon(getClass().getResource("/images/WELCOME part 2.gif")).getImage();
 
         // Layout vertikal dan transparan agar gambar latar terlihat
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -71,6 +71,7 @@ public class WelcomePanel extends JPanel {
 
         // Sisa ruang di bawah
         add(Box.createVerticalGlue());
+        
     }
 
     private void showSettingDialog() {
@@ -137,7 +138,7 @@ public class WelcomePanel extends JPanel {
     private void showAboutDialog() {
         JOptionPane.showMessageDialog(
                 this,
-                "Tic Tac Toe Game\nDeveloped by Your Name",
+                "Tic Tac Toe Game\nDeveloped by Kelompok 14",
                 "About Us",
                 JOptionPane.INFORMATION_MESSAGE
         );

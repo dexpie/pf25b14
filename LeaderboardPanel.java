@@ -20,7 +20,6 @@ public class LeaderboardPanel extends JPanel {
         tableModel.setData(data);
     }
 
-    // Table model for leaderboard
     private static class LeaderboardTableModel extends AbstractTableModel {
         private String[] columns = {"Nickname", "Win", "Draw", "Lose"};
         private List<String[]> data;
