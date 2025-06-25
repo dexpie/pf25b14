@@ -1,5 +1,6 @@
 import java.awt.*;
 import java.sql.*;
+import java.util.Scanner;
 import javax.swing.*;
 
 public class LoginUsername {
@@ -18,11 +19,11 @@ public class LoginUsername {
         // Database configuration
 
         private static final String DB_USER = "avnadmin";
-        private static final String DB_PASSWORD = "AVNS_AI_-WVmdV5uALzNILQI";
-        private static final String DB_NAME = "TicTacToe";
-        private static final String DB_HOST = "mysql-1fccdfe6-thaliaharnum-4a7b.d.aivencloud.com";
-        private static final String DB_PORT = "18628";
-        private static final String DB_URL = "jdbc:mysql://" + DB_HOST + ":" + DB_PORT + "/" + DB_NAME + "?sslmode=REQUIRED";
+        private static final String DB_PASSWORD = "AVNS_GcFcyt6nFyhLPEB185w";
+        private static final String DB_NAME = "defaultdb";
+        private static final String DB_HOST = "mysql-14b22b5s-pf25b14c.c.aivencloud.com";
+        private static final String DB_PORT = "16070";
+        private static final String DB_URL = "jdbc:mysql://" + DB_HOST + ":" + DB_PORT + "/" + DB_NAME + "?sslMode=REQUIRED";
 
         @Override
         public String getName() {
@@ -40,16 +41,8 @@ public class LoginUsername {
             setOpaque(false);
             setBorder(BorderFactory.createEmptyBorder(200, 0, 0, 0));
 
-            addLoginButton();
             addAboutButton();
             add(Box.createVerticalGlue());
-        }
-
-        private void addLoginButton() {
-            JButton loginButton = createStyledButton("LOGIN");
-            loginButton.addActionListener(e -> showLoginForm());
-            add(loginButton);
-            add(Box.createRigidArea(new Dimension(0, 10)));
         }
 
         private void addAboutButton() {
@@ -66,59 +59,44 @@ public class LoginUsername {
             return button;
         }
 
-        private void showLoginForm() {
-            JPanel panel = new JPanel(new GridLayout(2, 2, 5, 5));
-            JTextField usernameField = new JTextField();
-            JPasswordField passwordField = new JPasswordField();
-
-            panel.add(new JLabel("Username:"));
-            panel.add(usernameField);
-            panel.add(new JLabel("Password:"));
-            panel.add(passwordField);
-
-            int result = JOptionPane.showConfirmDialog(this, panel, "Login Form", JOptionPane.OK_CANCEL_OPTION);
-            if (result == JOptionPane.OK_OPTION) {
-                handleLogin(usernameField.getText().trim(), passwordField.getPassword());
-            }
-        }
-
-        private void handleLogin(String username, char[] password) {
-            if (username.isEmpty() || password.length == 0) {
-                JOptionPane.showMessageDialog(this, "Username dan password tidak boleh kosong.");
-                return;
-            }
-            saveToDatabase(username, new String(password));
-        }
-
-        private void saveToDatabase(String username, String password) {
-            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+        // Public static method for console-based login
+        public static String getPassword(String uName) {
+            String pass = "";
+            try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
-
-                String sql = "INSERT INTO gameuser (username, password, firstname, lastname, sex, state, won, lose, draw, play) " +
-                        "VALUES (?, ?, NULL, NULL, NULL, NULL, 0, 0, 0, 0)";
-
-                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                    stmt.setString(1, username);
-                    stmt.setString(2, password);
-
-                    if (stmt.executeUpdate() > 0) {
-                        JOptionPane.showMessageDialog(this, "Login berhasil! Data disimpan ke database.");
-                        if (loginListener != null) {
-                            loginListener.onLogin(username);
+                try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                     PreparedStatement statement = connection.prepareStatement("SELECT password FROM users WHERE username = ?")) {
+                    statement.setString(1, uName);
+                    try (ResultSet resultSet = statement.executeQuery()) {
+                        if (resultSet.next()) {
+                            pass = resultSet.getString("password");
                         }
                     }
                 }
-            } catch (SQLIntegrityConstraintViolationException e) {
-                JOptionPane.showMessageDialog(this, "Username sudah digunakan.");
-            } catch (ClassNotFoundException e) {
-                JOptionPane.showMessageDialog(this, "Driver database tidak ditemukan.");
-                e.printStackTrace();
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(this, "Gagal koneksi ke database: " + e.getMessage());
-                e.printStackTrace();
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
                 e.printStackTrace();
+            }
+            return pass;
+        }
+
+        // Example console login method (call this from your main class)
+        public static boolean consoleLogin() {
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Enter Username: ");
+            String username = scanner.nextLine();
+            System.out.print("Enter Password: ");
+            String password = scanner.nextLine();
+            String truePass = getPassword(username);
+            if (truePass.isEmpty()) {
+                System.out.println("Username tidak ditemukan!");
+                return false;
+            }
+            if (password.equals(truePass)) {
+                System.out.println("Login berhasil!");
+                return true;
+            } else {
+                System.out.println("Wrong password. Please try again!");
+                return false;
             }
         }
 
