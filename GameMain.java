@@ -68,8 +68,8 @@ public class GameMain extends JPanel {
     public GameMain() {
         // Set layout, borders, and background for game panel
         setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT + 30));
-        setBorder(BorderFactory.createLineBorder(COLOR_BG_STATUS, 2, false));
+        setPreferredSize(new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT));
+        setBorder(BorderFactory.createLineBorder(COLOR_BG_STATUS, 0, false));
         setBackground(COLOR_BG);
 
         // Initialize board model and UI listeners
