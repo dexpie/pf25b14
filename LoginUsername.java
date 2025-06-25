@@ -119,6 +119,6 @@ public class LoginUsername {
 
         public void setLoginListener(LoginListener listener) {
             this.loginListener = listener;
-        }
-    }
+        }
+}
 }

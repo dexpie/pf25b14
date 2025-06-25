@@ -445,6 +445,13 @@ public class GameMain extends JPanel {
      */
     public static void main(String[] args) {
         // Console login before showing any GUI
+        SoundEffect.init();
+
+        SoundEffect.setVolume(SoundEffect.Volume.MEDIUM);
+
+        SoundEffect.BACKSOUND.stop();
+        // Mulai backsound
+        SoundEffect.BACKSOUND.playLoop();
         boolean loginSuccess = false;
         while (!loginSuccess) {
             loginSuccess = LoginUsername.WelcomePanel.consoleLogin();

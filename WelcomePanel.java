@@ -1,12 +1,16 @@
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 /**
  * WelcomePanel: Menampilkan layar sambutan dengan gambar latar
- * dan dua pilihan tombol (LOGIN & ABOUT US), dengan padding atas
- * dan jarak antar tombol yang bisa diatur.
+ * dan beberapa pilihan tombol (LOGIN, PLAY, SETTING, ABOUT US/How To Play),
+ * dengan padding atas dan jarak antar tombol yang bisa diatur.
  */
 public class WelcomePanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -32,38 +36,38 @@ public class WelcomePanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setOpaque(false);
 
-        // Tambahkan padding atas sebesar 150px
-        setBorder(BorderFactory.createEmptyBorder(250, 0, 0, 0));
+        // Tambahkan padding atas sebesar 200px
+        setBorder(BorderFactory.createEmptyBorder(200, 0, 0, 0));
 
-        // Tombol LOGIN
-        JButton loginButton = new JButton("LOGIN");
-        loginButton.setFont(new Font("Arial", Font.BOLD, 20));
-        loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        loginButton.setFocusPainted(false);
-        loginButton.addActionListener(e -> showLoginDialog());
-        add(loginButton);
+        // Tombol PLAY
+        JButton playButton = new JButton("PLAY");
+        playButton.setFont(new Font("Arial", Font.BOLD, 20));
+        playButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        playButton.setFocusPainted(false);
+        playButton.addActionListener(e -> showChooser()); // langsung ke pilih karakter
+        add(playButton);
 
-        // Jarak antar tombol: 40px
+        // Jarak antar tombol: 10px
+        add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // Tombol HOW TO PLAY
+        JButton howToPlayButton = new JButton("How To Play");
+        howToPlayButton.setFont(new Font("Arial", Font.BOLD, 20));
+        howToPlayButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        howToPlayButton.setFocusPainted(false);
+        howToPlayButton.addActionListener(e -> showHowToPlayDialog());
+        add(howToPlayButton);
+
+        // Jarak antar tombol: 10px
         add(Box.createRigidArea(new Dimension(0, 10)));
 
         // Tombol ABOUT US
-        JButton aboutButton = new JButton("How To Play");
+        JButton aboutButton = new JButton("About Us");
         aboutButton.setFont(new Font("Arial", Font.BOLD, 20));
         aboutButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         aboutButton.setFocusPainted(false);
         aboutButton.addActionListener(e -> showAboutDialog());
         add(aboutButton);
-
-        // Jarak antar tombol: 10px
-        add(Box.createRigidArea(new Dimension(0, 10)));
-
-        // Tombol SETTING
-        JButton settingButton = new JButton("SETTING");
-        settingButton.setFont(new Font("Arial", Font.BOLD, 20));
-        settingButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        settingButton.setFocusPainted(false);
-        settingButton.addActionListener(e -> showSettingDialog());
-        add(settingButton);
 
         // Sisa ruang di bawah
         add(Box.createVerticalGlue());
@@ -121,11 +125,20 @@ public class WelcomePanel extends JPanel {
         cl.show(container, "chooser");
     }
 
+    private void showHowToPlayDialog() {
+        JOptionPane.showMessageDialog(
+                this,
+                "Cara bermain:\n1. Pilih mode dan karakter.\n2. Klik pada kotak untuk mengisi giliran Anda.\n3. Menangkan dengan membuat garis 3 simbol.\n4. Nikmati permainannya!",
+                "How To Play",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
     private void showAboutDialog() {
         JOptionPane.showMessageDialog(
                 this,
                 "Tic Tac Toe Game\nDeveloped by Your Name",
-                "How To Play",
+                "About Us",
                 JOptionPane.INFORMATION_MESSAGE
         );
     }
