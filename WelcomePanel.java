@@ -30,7 +30,7 @@ public class WelcomePanel extends JPanel {
         setOpaque(false);
 
         // Tambahkan padding atas sebesar 150px
-        setBorder(BorderFactory.createEmptyBorder(200, 0, 0, 0));
+        setBorder(BorderFactory.createEmptyBorder(250, 0, 0, 0));
 
         // Tombol LOGIN
         JButton loginButton = new JButton("LOGIN");
