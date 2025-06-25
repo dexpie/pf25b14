@@ -56,13 +56,15 @@ public class GameMain extends JPanel {
     private boolean isRematchRequested = false;
     private boolean isOpponentRematchRequested = false;
 
+    // Tambahan: leaderboard panel
+    private LeaderboardPanel leaderboardPanel;
+
+    // Tambahan: level AI
+    private String aiLevel = "medium"; // default
+
     /**
      * Constructor: set up the board UI and initial game state.
      */
-    public JLabel getStatusBar() {
-        return statusBar;
-    }
-
     public GameMain() {
         // Set layout, borders, and background for game panel
         setLayout(new BorderLayout());
@@ -75,6 +77,15 @@ public class GameMain extends JPanel {
         installMouseListener();            // Handle clicks on cells
         createStatusBar();                 // Set up the status bar at bottom
         initGame();                        // Prepare initial empty board state
+
+        leaderboardPanel = new LeaderboardPanel();
+        // Tambahkan tombol leaderboard di sudut atas
+        JButton leaderboardButton = new JButton("Leaderboard");
+        leaderboardButton.addActionListener(e -> showLeaderboardDialog());
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        topPanel.setOpaque(false);
+        topPanel.add(leaderboardButton);
+        add(topPanel, BorderLayout.NORTH);
     }
 
     /**
@@ -299,8 +310,9 @@ public class GameMain extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         setBackground(COLOR_BG);
-        board.paint(g);
+        board.paint(g);                       // Draw grid and any X/O symbols
 
+        // Update status bar based on game state
         if (isOnline && !isClientConnected) {
             statusBar.setForeground(Color.BLUE);
             statusBar.setText("Menghubungkan ke server... | Nickname: " + nickname);
@@ -310,38 +322,53 @@ public class GameMain extends JPanel {
         } else if (isOnline && isClientConnected && isOpponentConnected) {
             statusBar.setForeground(Color.BLACK);
             statusBar.setText("You: " + nickname + " vs " + opponentNickname + (currentState == State.PLAYING ? (currentPlayer == startingPlayer ? " (Your Turn)" : " (Opponent's Turn)") : ""));
-        } else {
-            switch (currentState) {
-                case PLAYING:
-                    statusBar.setForeground(Color.BLACK);
-                    statusBar.setText(currentPlayer == Seed.CROSS ? "X's Turn" : "O's Turn");
-                    break;
-                case DRAW:
-                    statusBar.setForeground(Color.RED);
-                    statusBar.setText("It's a Draw! Click to play again.");
-                    break;
-                case CROSS_WON:
-                    statusBar.setForeground(Color.RED);
-                    statusBar.setText("'X' Won! Click to play again.");
-                    break;
-                case NOUGHT_WON:
-                    statusBar.setForeground(Color.RED);
-                    statusBar.setText("'O' Won! Click to play again.");
-                    break;
+        } else if (currentState == State.PLAYING) {
+            statusBar.setForeground(Color.BLACK);
+            statusBar.setText(currentPlayer == Seed.CROSS ? "X's Turn" : "O's Turn");
+        } else if (currentState == State.DRAW) {
+            statusBar.setForeground(Color.RED);
+            statusBar.setText("It's a Draw! Click to play again.");
+            LeaderboardUtil.addResult(nickname, "draw");
+        } else if (currentState == State.CROSS_WON) {
+            statusBar.setForeground(Color.RED);
+            statusBar.setText("'X' Won! Click to play again.");
+            if (currentPlayer == Seed.NOUGHT) {
+                LeaderboardUtil.addResult(nickname, "win");
+            } else {
+                LeaderboardUtil.addResult(nickname, "lose");
+            }
+        } else if (currentState == State.NOUGHT_WON) {
+            statusBar.setForeground(Color.RED);
+            statusBar.setText("'O' Won! Click to play again.");
+            if (currentPlayer == Seed.CROSS) {
+                LeaderboardUtil.addResult(nickname, "win");
+            } else {
+                LeaderboardUtil.addResult(nickname, "lose");
             }
         }
 
-        // Show rematch button if game over
-        rematchButton.setVisible(currentState == State.DRAW || currentState == State.CROSS_WON || currentState == State.NOUGHT_WON);
+        // Tampilkan tombol rematch jika game selesai
+        if (currentState == State.DRAW || currentState == State.CROSS_WON || currentState == State.NOUGHT_WON) {
+            rematchButton.setVisible(true);
+        } else {
+            rematchButton.setVisible(false);
+        }
     }
 
     /**
      * Gerakan AI menggunakan algoritma Minimax.
      */
     private void aiMove() {
-        // AI (Minimax) hanya main jika masih PLAYING dan ada langkah
         if (currentState == State.PLAYING) {
-            int[] move = findBestMove(currentPlayer);
+            int[] move = null;
+            if ("easy".equals(aiLevel)) {
+                move = randomMove();
+            } else if ("medium".equals(aiLevel)) {
+                if (Math.random() < 0.5) move = randomMove();
+                else move = findBestMove(currentPlayer);
+            } else { // hard
+                move = findBestMove(currentPlayer);
+            }
             if (move != null) {
                 currentState = board.stepGame(currentPlayer, move[0], move[1]);
                 // Play sound effect jika perlu
@@ -357,6 +384,20 @@ public class GameMain extends JPanel {
                 repaint();
             }
         }
+    }
+
+    // Fungsi random move untuk AI easy/medium
+    private int[] randomMove() {
+        java.util.List<int[]> empty = new java.util.ArrayList<>();
+        for (int r = 0; r < Board.ROWS; r++) {
+            for (int c = 0; c < Board.COLS; c++) {
+                if (board.cells[r][c].content == Seed.NO_SEED) {
+                    empty.add(new int[]{r, c});
+                }
+            }
+        }
+        if (empty.isEmpty()) return null;
+        return empty.get((int)(Math.random() * empty.size()));
     }
 
     // Fungsi Minimax untuk AI
@@ -403,6 +444,15 @@ public class GameMain extends JPanel {
      * Application entry point: display symbol chooser, then game panel.
      */
     public static void main(String[] args) {
+        // Console login before showing any GUI
+        boolean loginSuccess = false;
+        while (!loginSuccess) {
+            loginSuccess = LoginUsername.WelcomePanel.consoleLogin();
+            if (!loginSuccess) {
+                System.out.println("Coba lagi atau tekan Ctrl+C untuk keluar.");
+            }
+        }
+        // Setelah login sukses, baru tampilkan GUI
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame(TITLE);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -410,22 +460,13 @@ public class GameMain extends JPanel {
             JPanel container = new JPanel(new CardLayout());
             // Create and add the game panel
             GameMain gamePanel = new GameMain();
-            // Minta nickname sebelum mulai (pindahkan ke chooser agar login di welcome)
-            // String nickname = JOptionPane.showInputDialog(frame, "Masukkan nickname:", "Player");
-            // if (nickname == null || nickname.trim().isEmpty()) nickname = "Player";
-            // gamePanel.setNickname(nickname.trim());
-            JPanel gameWithStatus = new JPanel(new BorderLayout());
-            gameWithStatus.add(gamePanel, BorderLayout.CENTER);
-            gameWithStatus.add(gamePanel.getStatusBar(), BorderLayout.SOUTH); // statusBar jadi bagian bawah
-            container.add(gameWithStatus, "game");
-
+            container.add(gamePanel, "game");
 
             // Inline symbol chooser panel with custom background
             JPanel chooserPanel = new JPanel(new BorderLayout()) {
                 private Image bg = new ImageIcon(
                         GameMain.class.getResource("/images/bg choose your character.png")
                 ).getImage();
-
                 @Override
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
@@ -446,71 +487,23 @@ public class GameMain extends JPanel {
             chooseLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
             chooserPanel.add(chooseLabel, BorderLayout.NORTH);
 
-            // Panel mode: radio buttons disusun vertikal
-            JPanel modePanel = new JPanel();
+            // Tambahkan panel pilihan mode
+            JPanel modePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
             modePanel.setOpaque(false);
-            modePanel.setLayout(new BoxLayout(modePanel, BoxLayout.Y_AXIS));
-
-// Buat radio buttons
-            Font rf = new Font("Dialog", Font.PLAIN, 16);
-            JRadioButton rbPvP    = new JRadioButton("Player vs Player");
-            JRadioButton rbPvC    = new JRadioButton("Player vs Computer");
+            JRadioButton rbPvP = new JRadioButton("Player vs Player");
+            rbPvP.setFont(new Font("Dialog", Font.PLAIN, 16));
+            JRadioButton rbPvC = new JRadioButton("Player vs Computer");
+            rbPvC.setFont(new Font("Dialog", Font.PLAIN, 16));
             JRadioButton rbOnline = new JRadioButton("Player vs Online");
-            rbPvP.setFont(rf);
-            rbPvC.setFont(rf);
-            rbOnline.setFont(rf);
-
-            Dimension p1 = rbPvP.getPreferredSize();
-            Dimension p2 = rbPvC.getPreferredSize();
-            Dimension p3 = rbOnline.getPreferredSize();
-            int maxWidth = Math.max(p1.width, Math.max(p2.width, p3.width));
-
-            int padding = 20;
-            Dimension uniformSize = new Dimension(maxWidth + padding, p1.height);
-
-            rbPvP.setPreferredSize(uniformSize);
-            rbPvC.setPreferredSize(uniformSize);
-            rbOnline.setPreferredSize(uniformSize);
-
-            rbPvP.setMaximumSize(uniformSize);
-            rbPvC.setMaximumSize(uniformSize);
-            rbOnline.setMaximumSize(uniformSize);
-
-// Supaya tombolnya rata tengah
-            rbPvP.setAlignmentX(Component.CENTER_ALIGNMENT);
-            rbPvC.setAlignmentX(Component.CENTER_ALIGNMENT);
-            rbOnline.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            JPanel modelPanel = new JPanel();
-            modePanel.setOpaque(false);
-            modePanel.setLayout(new BoxLayout(modePanel, BoxLayout.Y_AXIS));
-
-            modePanel.add(rbPvP);
-            modePanel.add(Box.createVerticalStrut(10));
-            modePanel.add(rbPvC);
-            modePanel.add(Box.createVerticalStrut(10));
-            modePanel.add(rbOnline);
-            modePanel.add(Box.createVerticalStrut(10));
-
-            chooserPanel.add(modePanel, BorderLayout.SOUTH);
-
-
-// Kelompokkan agar cuma satu yang terpilih
-            ButtonGroup group = new ButtonGroup();
-            group.add(rbPvP);
-            group.add(rbPvC);
-            group.add(rbOnline);
+            rbOnline.setFont(new Font("Dialog", Font.PLAIN, 16));
             rbPvP.setSelected(true);
-
-// Tambahkan dengan jarak antar tombol
+            ButtonGroup modeGroup = new ButtonGroup();
+            modeGroup.add(rbPvP);
+            modeGroup.add(rbPvC);
+            modeGroup.add(rbOnline);
             modePanel.add(rbPvP);
-            modePanel.add(Box.createVerticalStrut(10));
             modePanel.add(rbPvC);
-            modePanel.add(Box.createVerticalStrut(10));
             modePanel.add(rbOnline);
-            modePanel.add(Box.createVerticalStrut(20));  // jarak bawah
-
-// Pasang ke chooserPanel
             chooserPanel.add(modePanel, BorderLayout.SOUTH);
 
             // Sub-panel to hold buttons in center
@@ -521,7 +514,6 @@ public class GameMain extends JPanel {
             ImageIcon iconX = new ImageIcon(rawX.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH));
             ImageIcon iconO = new ImageIcon(rawO.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH));
             JButton btnX = new JButton(iconX);
-
             btnX.setPreferredSize(new Dimension(100, 100));
             btnX.setBorder(BorderFactory.createEmptyBorder());
             btnX.setFocusPainted(false);
@@ -547,6 +539,15 @@ public class GameMain extends JPanel {
                 } else {
                     gamePanel.setOnline(false);
                     gamePanel.setVsComputer(rbPvC.isSelected());
+                    if (rbPvC.isSelected()) {
+                        // Popup pilih level AI
+                        String[] levels = {"Easy", "Medium", "Hard"};
+                        int ai = JOptionPane.showOptionDialog(frame, "Pilih tingkat kesulitan AI:", "AI Level",
+                                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, levels, levels[1]);
+                        if (ai == 0) gamePanel.setAiLevel("easy");
+                        else if (ai == 1) gamePanel.setAiLevel("medium");
+                        else if (ai == 2) gamePanel.setAiLevel("hard");
+                    }
                 }
                 CardLayout cl = (CardLayout) container.getLayout();
                 cl.show(container, "game");
@@ -578,6 +579,15 @@ public class GameMain extends JPanel {
                 } else {
                     gamePanel.setOnline(false);
                     gamePanel.setVsComputer(rbPvC.isSelected());
+                    if (rbPvC.isSelected()) {
+                        // Popup pilih level AI
+                        String[] levels = {"Easy", "Medium", "Hard"};
+                        int ai = JOptionPane.showOptionDialog(frame, "Pilih tingkat kesulitan AI:", "AI Level",
+                                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, levels, levels[1]);
+                        if (ai == 0) gamePanel.setAiLevel("easy");
+                        else if (ai == 1) gamePanel.setAiLevel("medium");
+                        else if (ai == 2) gamePanel.setAiLevel("hard");
+                    }
                 }
                 CardLayout cl = (CardLayout) container.getLayout();
                 cl.show(container, "game");
@@ -601,6 +611,7 @@ public class GameMain extends JPanel {
             // Set login listener agar nickname di-set ke gamePanel sebelum ke chooser
             welcomePanel.setLoginListener(nickname -> {
                 gamePanel.setNickname(nickname);
+                LeaderboardUtil.ensureNicknameExists(nickname); // Tambahkan nickname ke database saat login
                 CardLayout cl = (CardLayout) container.getLayout();
                 cl.show(container, "chooser");
             });
@@ -699,6 +710,11 @@ public class GameMain extends JPanel {
         return mySeed;
     }
 
+    // Setter untuk aiLevel
+    public void setAiLevel(String level) {
+        this.aiLevel = level;
+    }
+
     private void onRematchClicked() {
         isRematchRequested = true;
         if (isOnline && client != null) {
@@ -725,5 +741,11 @@ public class GameMain extends JPanel {
         isOpponentRematchRequested = false;
         newGame();
         repaint();
+    }
+
+    // Tampilkan leaderboard dialog
+    private void showLeaderboardDialog() {
+        leaderboardPanel.refreshLeaderboard();
+        JOptionPane.showMessageDialog(this, leaderboardPanel, "Leaderboard", JOptionPane.PLAIN_MESSAGE);
     }
 }
