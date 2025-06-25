@@ -23,7 +23,7 @@ public class WelcomePanel extends JPanel {
     public WelcomePanel(JPanel container) {
         this.container = container;
         // Muat gambar background dari resources
-        bgImage = new ImageIcon(getClass().getResource("/images/welcome.png")).getImage();
+        bgImage = new ImageIcon(getClass().getResource("/images/welcome.gif")).getImage();
 
         // Layout vertikal dan transparan agar gambar latar terlihat
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -44,7 +44,7 @@ public class WelcomePanel extends JPanel {
         add(Box.createRigidArea(new Dimension(0, 10)));
 
         // Tombol ABOUT US
-        JButton aboutButton = new JButton("ABOUT US");
+        JButton aboutButton = new JButton("How To Play");
         aboutButton.setFont(new Font("Arial", Font.BOLD, 20));
         aboutButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         aboutButton.setFocusPainted(false);
@@ -69,7 +69,7 @@ public class WelcomePanel extends JPanel {
         JOptionPane.showMessageDialog(
                 this,
                 "Tic Tac Toe Game\nDeveloped by Your Name",
-                "About Us",
+                "How To Pla",
                 JOptionPane.INFORMATION_MESSAGE
         );
     }

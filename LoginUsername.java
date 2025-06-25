@@ -16,9 +16,18 @@ public class LoginUsername {
         private LoginListener loginListener;
 
         // Database configuration
-        private static final String DB_URL = "jdbc:mysql://mysql-1fccdfe6-thaliaharnum-4a7b.d.aivencloud.com:18628/defaultdb?sslMode=DISABLED";
+
         private static final String DB_USER = "avnadmin";
         private static final String DB_PASSWORD = "AVNS_AI_-WVmdV5uALzNILQI";
+        private static final String DB_NAME = "TicTacToe";
+        private static final String DB_HOST = "mysql-1fccdfe6-thaliaharnum-4a7b.d.aivencloud.com";
+        private static final String DB_PORT = "18628";
+        private static final String DB_URL = "jdbc:mysql://" + DB_HOST + ":" + DB_PORT + "/" + DB_NAME + "?sslmode=REQUIRED";
+
+        @Override
+        public String getName() {
+            return super.getName();
+        }
 
         public WelcomePanel(JPanel container) {
             this.container = container;
