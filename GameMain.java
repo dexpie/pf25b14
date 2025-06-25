@@ -48,8 +48,7 @@ public class GameMain extends JPanel {
     // Tambahan: seed milik client ini (X atau O)
     private Seed mySeed;
 
-    // Tombol Rematch
-    private JButton rematchButton;
+    // Tambahan: panel rematch
     private JPanel rematchPanel;
 
     // Tambahan: flag rematch online
@@ -62,6 +61,14 @@ public class GameMain extends JPanel {
     // Tambahan: level AI
     private String aiLevel = "medium"; // default
 
+    // Tambahan: tombol kembali dan label statistik
+    private JButton backButton;
+    private JLabel statsLabel;
+    private JLabel resultLabel; // Label hasil game
+
+    // Tambahan: flag untuk menampilkan popup hasil
+    private boolean hasShownResultPopup = false;
+
     /**
      * Constructor: set up the board UI and initial game state.
      */
@@ -71,7 +78,6 @@ public class GameMain extends JPanel {
         setPreferredSize(new Dimension(Board.CANVAS_WIDTH, Board.CANVAS_HEIGHT + 30));
         setBorder(BorderFactory.createLineBorder(COLOR_BG_STATUS, 2, false));
         setBackground(COLOR_BG);
-
 
         // Initialize board model and UI listeners
         board = new Board();               // Create the game board
@@ -125,6 +131,7 @@ public class GameMain extends JPanel {
                         // Ganti giliran (lock input)
                         currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
                         repaint();
+                        showResultPopupIfNeeded();
                     }
                     return;
                 }
@@ -154,6 +161,7 @@ public class GameMain extends JPanel {
                                 ? Seed.NOUGHT
                                 : Seed.CROSS;
                         repaint();
+                        showResultPopupIfNeeded();
 
                         // Jika mode vs komputer dan giliran AI, AI bergerak otomatis dengan delay
                         if (isVsComputer && currentState == State.PLAYING && currentPlayer == Seed.NOUGHT) {
@@ -189,19 +197,22 @@ public class GameMain extends JPanel {
         statusBar.setText("Your IP: " + localIp + " | Nickname: " + nickname);
         add(statusBar, BorderLayout.PAGE_END);
 
-        // Tombol Rematch
-        rematchButton = new JButton("Rematch");
-        rematchButton.setVisible(false);
-        rematchButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onRematchClicked();
-            }
-        });
-        rematchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        // Tambahan: tombol kembali dan statistik
+        backButton = new JButton("Kembali");
+        backButton.setVisible(false);
+        backButton.addActionListener(e -> onBackToMenu());
+        statsLabel = new JLabel();
+        statsLabel.setVisible(false);
+        resultLabel = new JLabel();
+        resultLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        resultLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        resultLabel.setVisible(false);
+        rematchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         rematchPanel.setOpaque(false);
-        rematchPanel.add(rematchButton);
-        add(rematchPanel, BorderLayout.AFTER_LAST_LINE);
+        rematchPanel.add(backButton);
+        rematchPanel.add(resultLabel);
+        rematchPanel.add(statsLabel);
+        add(rematchPanel, BorderLayout.CENTER);
 
         // Tambahkan panel chat di bawah status bar
         chatPanel = new JPanel(new BorderLayout());
@@ -284,6 +295,7 @@ public class GameMain extends JPanel {
      * Restart the game using the chosen starting player.
      */
     public void newGame() {
+        hasShownResultPopup = false; // Reset flag agar popup hanya muncul sekali per game
         initGame();                          // Reset board state
         currentPlayer = startingPlayer;      // Set the initial turn
     }
@@ -348,11 +360,41 @@ public class GameMain extends JPanel {
             }
         }
 
-        // Tampilkan tombol rematch jika game selesai
-        if (currentState == State.DRAW || currentState == State.CROSS_WON || currentState == State.NOUGHT_WON) {
-            rematchButton.setVisible(true);
-        } else {
-            rematchButton.setVisible(false);
+        // Tampilkan tombol rematch, kembali, dan statistik jika game selesai
+        boolean gameOver = (currentState == State.DRAW || currentState == State.CROSS_WON || currentState == State.NOUGHT_WON);
+        backButton.setVisible(false); // Sembunyikan tombol kembali
+        statsLabel.setVisible(false); // Jangan tampilkan statistik
+        resultLabel.setVisible(false); // Tidak perlu label lagi, pakai popup
+        if (gameOver) {
+            // statsLabel.setText(getPlayerStatsText()); // Hilangkan pengisian teks statistik
+        }
+        rematchPanel.revalidate();
+        rematchPanel.repaint();
+    }
+
+    private void showResultPopupIfNeeded() {
+        boolean gameOver = (currentState == State.DRAW || currentState == State.CROSS_WON || currentState == State.NOUGHT_WON);
+        if (gameOver && !hasShownResultPopup) {
+            String msg;
+            if (currentState == State.DRAW) {
+                msg = "Seri!";
+            } else if ((currentState == State.CROSS_WON && currentPlayer == Seed.NOUGHT) || (currentState == State.NOUGHT_WON && currentPlayer == Seed.CROSS)) {
+                msg = "Menang!";
+            } else {
+                msg = "Kalah!";
+            }
+            JOptionPane.showMessageDialog(this, msg, "Hasil Permainan", JOptionPane.INFORMATION_MESSAGE);
+            int opt = JOptionPane.showOptionDialog(this, "Apa yang ingin Anda lakukan?", "Game Selesai",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+                    new String[]{"Rematch", "Back"}, "Rematch");
+            if (opt == 1) { // Back
+                onBackToMenu();
+            } else if (opt == 0) { // Rematch
+                SwingUtilities.invokeLater(this::newGame);
+            }
+            hasShownResultPopup = true;
+        } else if (!gameOver) {
+            hasShownResultPopup = false;
         }
     }
 
@@ -383,6 +425,7 @@ public class GameMain extends JPanel {
                 }
                 currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
                 repaint();
+                showResultPopupIfNeeded();
             }
         }
     }
@@ -405,11 +448,12 @@ public class GameMain extends JPanel {
     private int[] findBestMove(Seed aiSeed) {
         int bestScore = Integer.MIN_VALUE;
         int[] bestMove = null;
+        Seed opponent = (aiSeed == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
         for (int r = 0; r < Board.ROWS; r++) {
             for (int c = 0; c < Board.COLS; c++) {
                 if (board.cells[r][c].content == Seed.NO_SEED) {
                     board.cells[r][c].content = aiSeed;
-                    int score = minimax(0, false, aiSeed, (aiSeed == Seed.CROSS ? Seed.NOUGHT : Seed.CROSS));
+                    int score = minimax(0, false, aiSeed, opponent);
                     board.cells[r][c].content = Seed.NO_SEED;
                     if (score > bestScore) {
                         bestScore = score;
@@ -445,14 +489,10 @@ public class GameMain extends JPanel {
      * Application entry point: display symbol chooser, then game panel.
      */
     public static void main(String[] args) {
-        // Console login before showing any GUI
         SoundEffect.init();
-
         SoundEffect.setVolume(SoundEffect.Volume.MEDIUM);
-
-        SoundEffect.BACKSOUND.stop();
-        // Mulai backsound
         SoundEffect.BACKSOUND.playLoop();
+        // Console login before showing any GUI
         boolean loginSuccess = false;
         while (!loginSuccess) {
             loginSuccess = LoginUsername.WelcomePanel.consoleLogin();
@@ -462,18 +502,16 @@ public class GameMain extends JPanel {
         }
         // Setelah login sukses, baru tampilkan GUI
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame(TITLE);
+            final JFrame frame = new JFrame(TITLE);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            // Create a container with CardLayout to swap views
-            JPanel container = new JPanel(new CardLayout());
-            // Create and add the game panel
-            GameMain gamePanel = new GameMain();
+            final JPanel container = new JPanel(new CardLayout());
+            final GameMain gamePanel = new GameMain();
             container.add(gamePanel, "game");
 
             // Inline symbol chooser panel with custom background
             JPanel chooserPanel = new JPanel(new BorderLayout()) {
                 private Image bg = new ImageIcon(
-                        GameMain.class.getResource("/images/bg choose your character.png")
+                        GameMain.class.getResource("/images/choose.jpg")
                 ).getImage();
                 @Override
                 protected void paintComponent(Graphics g) {
@@ -495,25 +533,6 @@ public class GameMain extends JPanel {
             chooseLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
             chooserPanel.add(chooseLabel, BorderLayout.NORTH);
 
-            // Tambahkan panel pilihan mode
-            JPanel modePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-            modePanel.setOpaque(false);
-            JRadioButton rbPvP = new JRadioButton("Player vs Player");
-            rbPvP.setFont(new Font("Dialog", Font.PLAIN, 16));
-            JRadioButton rbPvC = new JRadioButton("Player vs Computer");
-            rbPvC.setFont(new Font("Dialog", Font.PLAIN, 16));
-            JRadioButton rbOnline = new JRadioButton("Player vs Online");
-            rbOnline.setFont(new Font("Dialog", Font.PLAIN, 16));
-            rbPvP.setSelected(true);
-            ButtonGroup modeGroup = new ButtonGroup();
-            modeGroup.add(rbPvP);
-            modeGroup.add(rbPvC);
-            modeGroup.add(rbOnline);
-            modePanel.add(rbPvP);
-            modePanel.add(rbPvC);
-            modePanel.add(rbOnline);
-            chooserPanel.add(modePanel, BorderLayout.SOUTH);
-
             // Sub-panel to hold buttons in center
             JPanel btnPanel = new JPanel(new GridBagLayout());
             btnPanel.setOpaque(false);
@@ -526,81 +545,11 @@ public class GameMain extends JPanel {
             btnX.setBorder(BorderFactory.createEmptyBorder());
             btnX.setFocusPainted(false);
             btnX.setToolTipText("Play as X");
-            btnX.addActionListener(e -> {
-                gamePanel.setStartingPlayer(Seed.CROSS);
-                gamePanel.newGame();
-                if (rbOnline.isSelected()) {
-                    String serverIp = JOptionPane.showInputDialog(frame, "Masukkan IP Server:", "localhost");
-                    if (serverIp == null || serverIp.trim().isEmpty()) return;
-                    gamePanel.setOnline(true);
-                    gamePanel.setVsComputer(false);
-                    new Thread(() -> {
-                        try {
-                            TicTacToeClient client = new TicTacToeClient(gamePanel, Seed.CROSS, serverIp.trim());
-                            gamePanel.setMySeed(Seed.CROSS);
-                            gamePanel.setClient(client);
-                            client.start();
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }).start();
-                } else {
-                    gamePanel.setOnline(false);
-                    gamePanel.setVsComputer(rbPvC.isSelected());
-                    if (rbPvC.isSelected()) {
-                        // Popup pilih level AI
-                        String[] levels = {"Easy", "Medium", "Hard"};
-                        int ai = JOptionPane.showOptionDialog(frame, "Pilih tingkat kesulitan AI:", "AI Level",
-                                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, levels, levels[1]);
-                        if (ai == 0) gamePanel.setAiLevel("easy");
-                        else if (ai == 1) gamePanel.setAiLevel("medium");
-                        else if (ai == 2) gamePanel.setAiLevel("hard");
-                    }
-                }
-                CardLayout cl = (CardLayout) container.getLayout();
-                cl.show(container, "game");
-                frame.pack();
-            });
             JButton btnO = new JButton(iconO);
             btnO.setPreferredSize(new Dimension(100, 100));
             btnO.setBorder(BorderFactory.createEmptyBorder());
             btnO.setFocusPainted(false);
             btnO.setToolTipText("Play as O");
-            btnO.addActionListener(e -> {
-                gamePanel.setStartingPlayer(Seed.NOUGHT);
-                gamePanel.newGame();
-                if (rbOnline.isSelected()) {
-                    String serverIp = JOptionPane.showInputDialog(frame, "Masukkan IP Server:", "localhost");
-                    if (serverIp == null || serverIp.trim().isEmpty()) return;
-                    gamePanel.setOnline(true);
-                    gamePanel.setVsComputer(false);
-                    new Thread(() -> {
-                        try {
-                            TicTacToeClient client = new TicTacToeClient(gamePanel, Seed.NOUGHT, serverIp.trim());
-                            gamePanel.setMySeed(Seed.NOUGHT);
-                            gamePanel.setClient(client);
-                            client.start();
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }).start();
-                } else {
-                    gamePanel.setOnline(false);
-                    gamePanel.setVsComputer(rbPvC.isSelected());
-                    if (rbPvC.isSelected()) {
-                        // Popup pilih level AI
-                        String[] levels = {"Easy", "Medium", "Hard"};
-                        int ai = JOptionPane.showOptionDialog(frame, "Pilih tingkat kesulitan AI:", "AI Level",
-                                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, levels, levels[1]);
-                        if (ai == 0) gamePanel.setAiLevel("easy");
-                        else if (ai == 1) gamePanel.setAiLevel("medium");
-                        else if (ai == 2) gamePanel.setAiLevel("hard");
-                    }
-                }
-                CardLayout cl = (CardLayout) container.getLayout();
-                cl.show(container, "game");
-                frame.pack();
-            });
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridx = 0;
             gbc.gridy = 0;
@@ -614,12 +563,46 @@ public class GameMain extends JPanel {
             chooserPanel.add(wrapper, BorderLayout.CENTER);
             container.add(chooserPanel, "chooser");
 
-            // Tambahkan WelcomePanel
+            // Handler untuk tombol X dan O
+            ActionListener characterSelectListener = e -> {
+                if (e.getSource() == btnX) {
+                    gamePanel.setStartingPlayer(Seed.CROSS);
+                    gamePanel.setMySeed(Seed.CROSS);
+                } else {
+                    gamePanel.setStartingPlayer(Seed.NOUGHT);
+                    gamePanel.setMySeed(Seed.NOUGHT);
+                }
+                // Pop-up pilihan mode
+                String[] modes = {"Player vs Player", "Player vs Computer", "Player vs Online"};
+                int mode = JOptionPane.showOptionDialog(frame, "Pilih mode permainan:", "Mode Permainan",
+                        JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, modes, modes[0]);
+                if (mode == 0) {
+                    gamePanel.setOnline(false);
+                    gamePanel.setVsComputer(false);
+                } else if (mode == 1) {
+                    gamePanel.setOnline(false);
+                    gamePanel.setVsComputer(true);
+                    // Popup pilih level AI
+                    String[] levels = {"Easy", "Medium", "Hard"};
+                    int ai = JOptionPane.showOptionDialog(frame, "Pilih tingkat kesulitan AI:", "AI Level",
+                            JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, levels, levels[1]);
+                    if (ai == 0) gamePanel.setAiLevel("easy");
+                    else if (ai == 1) gamePanel.setAiLevel("medium");
+                    else if (ai == 2) gamePanel.setAiLevel("hard");
+                } else if (mode == 2) {
+                    gamePanel.setOnline(true);
+                    gamePanel.setVsComputer(false);
+                }
+                CardLayout cl = (CardLayout) container.getLayout();
+                cl.show(container, "game");
+            };
+            btnX.addActionListener(characterSelectListener);
+            btnO.addActionListener(characterSelectListener);
+
             WelcomePanel welcomePanel = new WelcomePanel(container);
-            // Set login listener agar nickname di-set ke gamePanel sebelum ke chooser
             welcomePanel.setLoginListener(nickname -> {
                 gamePanel.setNickname(nickname);
-                LeaderboardUtil.ensureNicknameExists(nickname); // Tambahkan nickname ke database saat login
+                LeaderboardUtil.ensureNicknameExists(nickname);
                 CardLayout cl = (CardLayout) container.getLayout();
                 cl.show(container, "chooser");
             });
@@ -750,9 +733,35 @@ public class GameMain extends JPanel {
         newGame();
         repaint();
     }
+
     // Tampilkan leaderboard dialog
     private void showLeaderboardDialog() {
         leaderboardPanel.refreshLeaderboard();
         JOptionPane.showMessageDialog(this, leaderboardPanel, "Leaderboard", JOptionPane.PLAIN_MESSAGE);
-}
+    }
+
+    // Fungsi kembali ke menu utama
+    private void onBackToMenu() {
+        // Cari parent JFrame dan CardLayout, lalu kembali ke welcome/chooser
+        java.awt.Container parent = this.getParent();
+        while (parent != null && !(parent instanceof JFrame)) {
+            parent = parent.getParent();
+        }
+        if (parent != null) {
+            JFrame frame = (JFrame) parent;
+            java.awt.Container content = frame.getContentPane();
+            if (content instanceof JPanel && ((JPanel) content).getLayout() instanceof CardLayout) {
+                CardLayout cl = (CardLayout) ((JPanel) content).getLayout();
+                cl.show((JPanel) content, "welcome");
+            }
+        }
+    }
+
+    // Fungsi statistik player (dummy, bisa diambil dari LeaderboardUtil)
+    private String getPlayerStatsText() {
+        int win = LeaderboardUtil.getWinCount(nickname);
+        int lose = LeaderboardUtil.getLoseCount(nickname);
+        int draw = LeaderboardUtil.getDrawCount(nickname);
+        return String.format("Statistik: %s | Menang: %d | Kalah: %d | Seri: %d", nickname, win, lose, draw);
+    }
 }
